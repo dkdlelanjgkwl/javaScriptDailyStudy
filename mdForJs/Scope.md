@@ -80,3 +80,4 @@
         }
         bar(); //  'local function foo' 
         foo(); // 'global function foo'
+- 변수 검색과 똑같이 foo함수가 실행될때 상위함수(bar)의 스코프내에서 foo자신의 값을 먼저 찾기때문에 bar함수안의 foog함수가 실행된다.
