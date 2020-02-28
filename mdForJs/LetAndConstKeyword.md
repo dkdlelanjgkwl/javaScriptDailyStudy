@@ -44,8 +44,64 @@ hoisting -> 일시적사각지대(temporal dead zone; tdz) -> 초기화단계(un
       param = 100; // 변수에 값할당
       console.log(param); // 100
 ### 2.4. 전역객체와 let
+
+    // 전역변수선언
+    var x = 1;
+    // 암묵적 전역변수
+    y = 101;
+
+    console.log(window.x); // 1 => 전역변수 x는 전역객체(window)의 프로퍼티이다.
+    console.log(x); // 1 => window객체를 생략해도 변수가 전역변수면 window객체를 생략해도 값을 가져올 수 있다.
+
+    // 암묵적 전역변수도 window객체의 프로퍼티이다.
+    console.log(y); // 101
+    console.log(window.y); // 101
+
+    // 함수선언문도 전역객체의 프로퍼티이다.
+    function foo(){
+      // ...
+      return console.log('hi');
+    }
+
+    console.log(foo); // f foo() { }
+    console.log(window.foo); // f foo() { }
+
+    // var 대신 let 키워드를 사용했을때
+    let z = 5;
+
+    // let키워드를 사용한 변수는 전역객체의 프로퍼티가 아니다.
+    console.log(window.z); // undefined
+    console.log(z); // 5
 ## 3. const 키워드 (ES6)
 ### 3.1. 선언과 초기화
+> const 키워드로 선언된 변수는 반드시 선언과 동시에 할당이 이루어져야한다.<br>
+const 키워드로 선언한변수는 let 키워드로 선언한 변수와 마찬가지로 블록레벨 스코프를 가지며 호이스팅이 발생하지 않는 것처럼 동작한다.
+
+    const xyz; // syntaxError : missing initializer in const declaration
+
 ### 3.2. 재할당 금지
+> var 또는 let 키워드로 선언한변수는 재할당이 자유로우나 const 키워드로 선언한 변수는 재할당이 금지된다.
+
+    const xxx = 1;
+    xxx = 2; // type error : assignment to constant variable
 ### 3.3. 상수
+> const 키워드로 선언한 변수에 원시값을 할당할 경우, 변수값을 변경할 수 없다. 이러한 특징을 이용해 const 키워드를 상수를 표현하는데 사용하기도 한다.<br>
+**상수는 재할당이 금지된 변수**
+
+      const TAX_RATE = 0.1;  // 변수이름은 대문자로 선언하여 상수임을 명확히 나타낸다. (세율은 변경되지 않을것을 의미)
+      let preTaxPrice = 1000000; // 세전 가격
+      let aferTaxPrice = preTaxPrice - (preTaxPrice * TAX_RATE); // 세후 가격
+      console.log(aferTaxPrice);
+- 상수는 프로그램전체에서 공통으로 사용되므로 만약 세율이 변경되면 상수만을 변경하면되기 때문에 유지보수성이 향상된다.
 ### 3.4. 객체
+      const person = { firstName : 'Lee' };
+      person.firstName = 'kim'; // 객체는 변경가능한 값이다.
+      console.log(person.firstName); // kim
+- const 키워드는 재할당을 금지할뿐 "불변"을 의미하지 않는다.<br>
+즉, 새로운 값(위 코드에서는 person 객체)을 재할당하는 것은 불가능하지만 객체의 값을 변경할 수 없는 것은 아니다.
+## 4. 변수 선언문 결론
+> 변수 선언에는 기본적으로 const를 사용하고 let은 재할당이 필요한 경우에 한정해 사용하는 것이 좋다. 원시 값의 경우, 가급적 상수를 사용하는 편이 좋다. 그리고 객체를 재할당하는 경우는 생각보다 흔하지 않다. const 키워드를 사용하면 의도치 않은 재할당을 방지해 주기 때문에 보다 안전하다.
+- ES6를 사용한다면 var 키워드는 사용하지 않는다.
+
+- 재할당이 필요한 경우에 한정해 let 키워드를 사용한다. 이때 변수의 스코프는 최대한 좁게 만든다.
+- 변경이 발생하지 않고 읽기 전용으로 사용하는(재할당이 필요 없는 상수) 원시 값과 객체에는 const 키워드를 사용한다. const 키워드는 재할당을 금지하므로 var, let 키워드보다 안전하다.
