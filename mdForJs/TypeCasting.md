@@ -124,12 +124,3 @@
 
         getStringLength();     // 0
         getStringLength('hi'); // 2
-
-
-
-
-
-
-
-
-
