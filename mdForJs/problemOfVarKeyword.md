@@ -91,10 +91,12 @@ java의 private public protected와 비슷한개념(접근제한자)
     console.log(Counter.increase()); // 3
     console.log(Counter.decrease()); // 2
 - 즉시 실행함수로 리턴하는 값은 외부에서 접근가능한(public개념) 변수나 함수를 객체에 담아서 반환한다. 때문에 외부에서 접근하게 하고싶지않은 변수나 함수는(private개념) 반환하는 객체에 추가하지 않음으로서 private 멤버가 된다.
+
+- 위 예제코드에서 increase함수와 decrease함수가 선언된 시점은 conunter라는 변수에 함수가 정의되고 할당되는시점이다. 그때 함수가 정의가되면서 increase와 decrease 함수가 기억하고 있는 스코프는 counter함수의 내부몸체가 되기때문에 initNum이라는 변수의 생명주기가 끝나더라도 그 변수를 참조할수 있는것이다.
 ### 3.4. ES6 모듈
 > 전역 변수의 남발을 억제하기 위해 ES6에서 도입된 모듈을 사용할 수도 있다. 모던 브라우저(Chrome 61, FF 60, SF 10.1, Edge 16 이상)에서 ES6 모듈을 사용할 수 있다.
 <br>script 태그에 type=”module” 어트리뷰트를 추가하면 로드된 자바스크립트 파일은 모듈로서 동작한다. 모듈의 파일 확장자는 mjs를 권장한다.
 
     <script type="module" src="lib.mjs"></script>
     <script type="module" src="app.mjs"></script>
-- 하지만 ES6 모듈은 IE를 포함한 구형 브라우저는 동작하지 않으며, 브라우저의 ES6 모듈 기능을 사용하더라도 트랜스파일링이나 번들링이 필요하기 때문에 아직까지는 브라우저가 지원하는 ES6 모듈 기능보다는 Webpack 등의 모듈 번들러를 사용하는 것이 일반적이다.
+- 하지만 ES6 모듈은 IE를 포함한 구형 브라우저는 동작하지 않으며, 브라우저의 ES6 모듈 기능을 사용하더라도 트랜스파일링이나 번들링이 필요하기 때문에 아직까지는 **브라우저가 지원하는 ES6 모듈 기능보다는 Webpack 등의 모듈 번들러를 사용하는 것이 일반적이다.**
