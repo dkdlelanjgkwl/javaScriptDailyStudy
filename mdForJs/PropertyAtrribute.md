@@ -101,76 +101,97 @@
 | `writable` | false |
 | `enumerable` | false |
 
-    const fruit = {};
-    Object.defineProperty(fruit, 'favoritSpecies',{
-      value : [ 'apple', 'jamong', 'mango', 'strawBerry'],
-      writable : true,
-      enumerable : true, 
-      configurable : true
-    });
+      const fruit = {};
 
-    Object.defineProperty(fruit, 'dislikeSpecies', {
-      value : ['papaya', 'guajava']
-    });
 
-    let descriptor = Object.getOwnPropertyDescriptor(fruit, 'favoritSpecies');
+      Object.defineProperty(fruit, 'favoritSpecies',{
+        value : [ 'apple', 'jamong', 'mango', 'strawBerry'],
+        writable : true,
+        enumerable : true, 
+        configurable : true
+      });
 
-    console.log(descriptor);
+      Object.defineProperty(fruit, 'dislikeSpecies', {
+        value : ['papaya', 'guajava']
+      });
 
-    descriptor = Object.getOwnPropertyDescriptor(fruit, 'dislikeSpecies');
+      let descriptor = Object.getOwnPropertyDescriptor(fruit, 'favoritSpecies');
 
-    console.log(descriptor);
+      console.log(descriptor); 
+      // {
+      //   value: [ 'apple', 'jamong', 'mango', 'strawBerry' ],
+      //   writable: true,
+      //   enumerable: true,
+      //   configurable: true
+      // }
 
-    // dislikeSpecies는 프로퍼티 값을 지정하지 않고 기본값으로 생성했으므로 enumerable = false이기 때문에 열거되지 않는다.
+      descriptor = Object.getOwnPropertyDescriptor(fruit, 'dislikeSpecies');
 
-    console.log(Object.keys(fruit)); // 'favoritSpecies'
-    
-    // dislikeSpecies의 writable 값은 false이므로 현재 지정된 배열값외에 다른 값으로 바뀔수 없다.
-    
-    fruit.dislikeSpecies.push('banana'); // 배열 자체의 값에 객체의 디스크립터설정은 먹히지않는다.
-    fruit.dislikeSpecies = ['banana'];
-    fruit.dislikeSpecies = 'hello';
+      console.log(descriptor);
+      // {
+      //   value: [ 'papaya', 'guajava' ],
+      //   writable: false,
+      //   enumerable: false,
+      //   configurable: false
+      // }
 
-    // 하지만 키값인 배열자체값을 다른배열로 바꾸려하면 바꿀수없다.
-    console.log(fruit.dislikeSpecies);
+      // dislikeSpecies는 프로퍼티 값을 지정하지 않고 기본값으로 생성했으므로 enumerable = false이기 때문에 열거되지 않는다.
 
-    // configurable 값이 false인경우 삭제를 할수 없고 해당프로퍼티 재정의도 불가능하다.
+      console.log(Object.keys(fruit)); // [ 'favoritSpecies' ] 열거되지 않음.
 
-    delete fruit.dislikeSpecies; // 삭제불가, 에러는 발생되지않고 무시된다.
+      // dislikeSpecies의 writable 값은 false이므로 현재 지정된 배열값외에 다른 값으로 바뀔수 없다.
+      fruit.dislikeSpecies = ['banana'];
+      fruit.dislikeSpecies = 'hello';
+      console.log(fruit.dislikeSpecies);
 
-    // Object.defineProperty(fruit, dislikeSpecies, {enumerable : true}); // Cannot redefine Property : dislikeSpecies
+      // 얕은 변경방지로 인해 배열내부자체값은 변경가능.
+      fruit.dislikeSpecies.push('banana');
+      console.log(fruit.dislikeSpecies);
 
-    Object.defineProperty(fruit, 'addFavorit', {
-      get() {
-        res = '';
-        for(let i = 0; i < this.favoritSpecies.length; i++){
-          res += this.favoritSpecies[i]
-          if(!(i===this.favoritSpecies.length)){
-            res += '\n';
+
+      // configurable 값이 false인경우 삭제를 할수 없고 해당프로퍼티 재정의도 불가능하다.
+
+      delete fruit.dislikeSpecies; // 삭제불가, 에러는 발생되지않고 무시된다.
+
+      // Object.defineProperty(fruit, dislikeSpecies, {enumerable : true}); 
+      // Cannot redefine Property : dislikeSpecies
+
+      Object.defineProperty(fruit, 'addFavorit', {
+        get() {
+          res = '';
+          for(let i = 0; i < this.favoritSpecies.length; i++){
+            res += this.favoritSpecies[i]
+            if(!(i===this.favoritSpecies.length)){
+              res += '\n';
+            }
           }
-        }
-        return res;
-      },
-      set(str) {
-        let items = str.split(' ');
-        for(let i = 0; i < items.length; i++){
-          if(this.favoritSpecies.indexOf(items[i]) === -1) 
-            this.favoritSpecies.push(items[i])
-        }
-      },
-      enumerable : true,
-      configurable : true
-    });
+          return res;
+        },
+        set(str) {
+          let items = str.split(' ');
+          for(let i = 0; i < items.length; i++){
+            if(this.favoritSpecies.indexOf(items[i]) === -1) 
+              this.favoritSpecies.push(items[i])
+          }
+        },
+        enumerable : true,
+        configurable : true
+      });
 
-    console.log(fruit.addFavorit);
-    fruit.addFavorit = 'jamong';
-    fruit.addFavorit = 'pineApple Aloe';
-    console.log(fruit.addFavorit);
+      // getter setter 함수가 제대로 정의되었는지 확인 
+      descriptor = Object.getOwnPropertyDescriptor(fruit, 'addFavorit');
+      console.log(descriptor);
+      // {  get: [Function: get], set: [Function: set], enumerable: true, configurable: true }
 
-    descriptor = Object.getOwnPropertyDescriptor(fruit, 'addFavorit');
+      // getter 함수호출로 배열값 확인
+      console.log(fruit.addFavorit);
 
-    console.log(descriptor);
-    // {  get: [Function: get], set: [Function: set], enumerable: true, configurable: true }
+      // 접근자 프로퍼티로 setter 함수호출해서 객체안에 값을 바꾸기.
+      fruit.addFavorit = 'jamong'; 
+      fruit.addFavorit = 'pineApple Aloe';
+
+      // getter 함수호출로 배열값 확인
+      console.log(fruit.addFavorit);
 ## 5. 객체변경 방지
 > 객체는 변경 가능한 값이므로 재할당없이 직접 변경이 가능하다. 즉, 프로퍼티를 추가하거나 삭제할 수 있고, 프로퍼티의 값을 갱신할 수 있으며 Object.defineProperty 또는 Object.defineProperties 메소드를 사용하여 프로퍼티 어트리뷰트를 재정의할 수도 있다.<br>
 자바스크립트는 객체의 변경을 방지할 수 있는 다양한 메소드를 제공한다. 객체 변경 방지 메소드 들은 객체의 변경을 금지하는 강도가 다르다.
