@@ -170,12 +170,200 @@ prototype 프로퍼티는 함수가 객체를 생성하는 생성자 함수로 �
 이처럼 다양한방식으로 생성한 객체는 각각의 세부적인 객체생성방식의 차이는 있을 수 있지만 큰틀에서 보면 ObjectCreate 추상연산을 사용하여 객체가 생성된다는 공통점을 가진다.
 > 추상연산 Objectcreate는 필수적으로 자신이 생성할 객체의 proto 타입을 인수로 전달받는다. 그리고 빈객체를 생성한 후 객체에 추가할 프로퍼티 목록이 인수로 전달된 경우 프로퍼티를 객체에 추가한다 <br> 그리고 인수로 받은 프로토 타입을 자신이 생성할 인스턴스의 내부슬롯 [[prototype]]에 할당한 다음 객체를 반환한다.<br> 즉 프로토타입은 추상연산 Objectcreate에 전달되는 인수(proto)의해 결정되고 이 proto인수는 객체가 생성되는 시점에 객체 생성방식에 의해 결정된다. 
 ### 6.1. 객체리터럴에 의해 생성된 객체의 프로토타입
-> 객체 리터럴에의해 생성되는 객체의 프로토타입은 Object.prototype이다 
+> 객체 리터럴에의해 생성되는 객체의 프로토타입은 Object.prototype이다. 
+
+객체리터럴을 평가하고 객체를 생성할때 Objectcreate추상연산을 호출 하고 Object.prototype을 전달받는다. 즉, 객체리터럴로 생성되는 객체의 프로토타입은 Object.prototype이다.
+
+    const bbc = { x : 1 };
+
+    // 객체리터럴로 생성된 객체의 프로토타입확인
+    console.log(bbc.__proto__ === Object.prototype); // true
+
+    // 객체리터럴로 생성된 객체의 생성자함수 확인
+    console.log(bbc.constructor === Object); // true
+
+    // 리터럴로 생성된 객체의 프로토타입이 가지고 있는 프로퍼티 확인
+    const bb1 = Object.getOwnPropertyNames(bbc.__proto__);
+    console.log(bb1);
+
+    // [
+    //   'constructor',
+    //   '__defineGetter__',
+    //   '__defineSetter__',
+    //   'hasOwnProperty',
+    //   '__lookupGetter__',
+    //   '__lookupSetter__',
+    //   'isPrototypeOf',
+    //   'propertyIsEnumerable',
+    //   'toString',
+    //   'valueOf',
+    //   '__proto__',
+    //   'toLocaleString'
+    //  ]
+
+    // 리터럴로 생성된 객체는 Objcet.prototype과 __proto__ 식별자로 연결되있고 Object.prototype의 프로퍼티를 상속받아 사용할수 있다.
+    console.log(bbc.constructor); // 상속받은 constructor프로퍼티 사용
+    console.log(bbc.hasOwnProperty('x')); // 상속받은 hasOwnProperty프로퍼티 사용
+ 
 ### 6.2. Object 생성자 함수의해 생성된 객체의 프로토타입
+> Object생성자 함수에 의해 생성되는 객체의 prototype은 Object.prototype이다.
+
+객체리터럴과 Object생성자 함수의 객체생성 방식의 차이는 프로퍼티를 추가하는 방식에 있다. 객체 리터럴은 객체리터럴 내부에 프로퍼티를 추가하지만 Object 생성자 함수는 일단 빈객체를 생성한 후 프로퍼티를 추가해야한다.
+
+    const yyy = new Object(); // 빈객체생성
+    yyy.x = 1; // 프로퍼티추가
+
+    // 이후 Object.prototype을 상속받아 프로퍼티를 사용할 수 있는것은 똑같음.
+    console.log(yyy.constructor); // true
+    console.log(yyy.hasOwnProperty('x')); // true
 ### 6.3. 생성자 함수에 의해 생성된 객체의 프로토타입
+> 다른객체와 마찬가지로 Object.create 추상연산을 호출하고 생성자함수의 prototype프로퍼티에 바인딩된 객체를 Object.create로 전달한다.<br> 즉, **생성자 함수에 의해 생성되는 객체의 프로토타입은 생성자함수 prototype에 바인딩 되어있는 객체이다.**
+
+    function Something(whatever){
+    this.value = whatever;
+    return this.value;
+    }
+    const newFuncObj = new Something('zz');
+
+    // 생성자함수의 prototype과 생성자함수로 생성한 객체의 prototype은 같음을 증명.
+    console.log(newFuncObj.__proto__); // Something {}
+    console.log(Something.prototype); // Something {}
+    console.log(newFuncObj.__proto__ === Something.prototype); // true
+
+    // 생성자 함수의 프로토타입과 생성자함수는 다른것임을 증명.
+    console.log(newFuncObj.constructor); // [Function: Something]
+    console.log(newFuncObj.__proto__); // Something {}
+    console.log(newFuncObj.constructor === newFuncObj.__proto__); // false
+
+    // 생성자함수의 프로토타입과 생성자함수 간 프로퍼티 차이점
+    let abcde = Object.getOwnPropertyNames(newFuncObj.__proto__); 
+    console.log(abcde); // [ 'constructor' ]
+    abcde = Object.getOwnPropertyNames(newFuncObj.constructor);
+    console.log(abcde) ; // [ 'length', 'name', 'arguments', 'caller', 'prototype' ]
+
+위 코드의 생성자함수의 프로토타입에 프로퍼티를 추가하여 자식객체가 상속을 받을 수 있도록 코드를 구현할수있다.<br> 그리고 프로토 타입객체에 프로퍼티를 추가하거나 삭제할 수 있고 이는 즉각적으로 프로토 타입체인에 반영된다.
+
+    function Something(whatever){
+      this.value = whatever;
+    }
+
+    // 생성자 함수가 가진 프로토타입객체에 프로퍼티 추가.
+    Something.prototype.doSomething = function(){
+      result = this.value + 100;
+      return result;
+    };
+    Something.prototype.y = 1000;
+    Something.prototype.original = this.value+1;
+
+    const abcd = new Something(1);
+    const aabb = new Something(100);
+
+    // 생성자함수가 만든객체는 생성자함수의 prototype에 추가한 메서드나 객체의 값에 접근할 수 있다.
+    console.log(abcd.doSomething()); // 101
+    console.log(aabb.doSomething()); // 200
+    console.log(abcd.y); // 1000
+    console.log(abcd.original); // nan???
+    console.log(aabb.original); // nan??
+
 ## 7. 프로토타입 체인
+> 자바스크립트는 객체의 프로퍼티(메소드 포함)에 접근하려고 할 때 해당객체에 접근하려는 프로퍼티가 없다면 __proto__접근자 프로퍼티가 가리키는 링크를 따라 자신의 부모역할을 하는 프로토타입의 프로퍼티를 순차적으로 검색한다. <br> 프로토타입 체인은 자바스크립트가 객체지향 프로그래밍의 상속을 구현하는 메커니즘이다.
+
+    function Cafe(cafeName){
+      this.name = cafeName;
+    }
+
+    const myCafe = new Cafe('dotax');
+
+    // 프로토타입 체인 증명
+
+    // 생성자함수가 생성한 객체는 상위 프로토타입으로 생성자함수의 프로토타입을 가진다.
+    console.log(Object.getPrototypeOf(myCafe) === Cafe.prototype); // true
+
+    // 생성자 함수가만든 객체의 프로토타입의 상위 프로토 타입은 Object.prototype이다.
+    console.log(Object.getPrototypeOf(Cafe.prototype) === Object.prototype); //true
+
+    // 생성자 함수자체의 상위 프로토타입은 Function.prototype이다.
+    console.log(Object.getPrototypeOf(Cafe) === Function.prototype); //true
+
+    // Function.prototype의 상위 프로토타입은 Object.prototype이다.
+    console.log(Object.getPrototypeOf(Function.prototype) === Object.prototype); // true
+
+    // 여기서 주의할 점은 생성자함수가 객체를 만들때 생성되는 prototype은 constructor 함수가 가지고 있는 내부 프로퍼티의 prototype이다. 생성자함수 자체의 prototype과는 다르다.
+
+    // Cafe 생성자함수의 모든프로퍼티확인 -> prototype을 가지고있는것을 알 수 있다. 하지만 이 prototype은 새로운 객체를 생성할때 객체의 상위 프로토타입을 가지기위해 가지고있는 프로퍼티일뿐이다. 생성자함수의 상위 프로토타입과는 상관이없다.
+    console.log(Object.getOwnPropertyNames(Cafe)); // [ 'length', 'name', 'arguments', 'caller', 'prototype' ]
+    console.log(Object.getPrototypeOf(Cafe) === Object.getPrototypeOf(myCafe)) // false
+
+
+위 코드를 보면 모든 프로토타입의 최상위에는 Object.prototype이 있다. 따라서 **모든 객체는 Object.prototype을 상속**을 받는다. 또 Object.prototype을 프로토 타입체인의 종점이라고한다 (End of prototype chain). Object.prototype의 [[prototype]] 슬롯의 내부값은 null이다.<br> 그리고 프로토타입 체인 종점에서 존재하지 않는 프로퍼티를 검색할 경우 undefined를 반환한다. 이때 에러가 발생하지않는 점을 주의하자.
+
+    function Cafe(cafeName){
+      this.name = cafeName;
+    }
+    Cafe.prototype.getCafeName = function(){
+      console.log(`지금 방문하신 카페는 ${this.name}입니다.`);
+    };
+    const myCafe = new Cafe('dotax');
+
+    // 스코프체인에 의한 프로퍼티검색 증명
+
+    // 생성자 함수로 만든 myCafe객체에는 hasOwnProperty() 메소드가 존재하지않지만 메소드를 사용가능하다. 이 메소드가 현재객체내에 존재하지 않으므로 상위 프로토타입을 검색한다.
+    console.log(myCafe.hasOwnProperty('name')); //true
+
+    // 상위 프로토 타입체인(Cafe.prototype)에서 hasOwnPrototpye메소드검색
+    console.log(Object.getOwnPropertyNames(Cafe.prototype)); // [ 'constructor', 'getCafeName' ]
+
+    // 상위 프로토타입 체인에서 검색을 했을시에 contructor와 getCafeName 만존재하므로 다시 상위 프로토타입(Object.prototype)을 검색
+
+    console.log(Object.getOwnPropertyNames(Object.prototype));
+    // [
+    //   'constructor',
+    //   '__defineGetter__',
+    //   '__defineSetter__',
+    //   'hasOwnProperty', 존재하므로 이 프로퍼티를 상속받아서 사용하는 것이다.
+    //   '__lookupGetter__',
+    //   '__lookupSetter__',
+    //   'isPrototypeOf',
+    //   'propertyIsEnumerable',
+    //   'toString',
+    //   'valueOf',
+    //   '__proto__',
+    //   'toLocaleString'
+    // ]
 ## 8. 캡슐화
+> 즉시실행 함수로 생성자함수의 정의, 생성자함수의 프로토 타입 메소드정의를 하고 생성자함수자체를 리턴하여 리턴한 생성자함수로 객체를 생성하는방식.
+
+    const Calculator = (function(){
+      let _x = 0;
+      let _y = 0;
+
+      function Calc(x,y){
+        _x = x;
+        _y = y;
+      }
+
+      Calc.prototype.add = function(){
+        result = _x + _y;
+        return result;
+      }
+      
+      console.log(Calc);
+      
+      return Calc;
+    })();
+
+    const done = new Calculator(10,50);
+
+    // Calc.prototype.add = function(){} 을 할당할때의 변수 스코프를 기억하고있다.( 여기선 생성자함수를 호출할때 바인딩되는 _x 그리고 _y 값을 계속 기억하고있다. )
+    console.log(done.add()); // 60
+
+    // 즉시실행함수에 의해 prototype에 기억해두었던 메서드나 변수를 제외하고 모든 변수들의 생명주기는 끝나있는상태. 따라서 값의 재할당도 불가능
+    done.x = 50;
+    console.log(done.add()) // 100을 예상하였지만 즉시실행함수를 호출할때 인수로 받았던 _x의 값은 변하지 않았다..
 ## 9. 오버라이딩과 프로퍼티 쉐도잉
+> 상속받은 메서드를 하위객체에서 메소드의 내용만 변경해서 재사용하는것을 오버라이딩이라고한다.<br> 하위객체에서 오버라이딩이 일어나면 하위객체에게 메소드를 상속해주는 상위 프로토타입객체의 메소드는 하위객체에서 접근할수 없는 문제점이 생기는데 이것을 프로퍼티 쉐도잉이라고 한다.
+
+
 ## 10. 프로토타입의 교체
 ## 11. instanceof 연산자
 ## 12. 직접상속
