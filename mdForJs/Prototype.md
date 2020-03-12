@@ -526,8 +526,43 @@ prototype 프로퍼티는 함수가 객체를 생성하는 생성자 함수로 �
     tt = Object.getOwnPropertyNames(Frozen.prototype); // [ 'some' ] contructor가 없는 상태.
     console.log(fish instanceof Frozen); // true constructor가 없어도 true가 반환
 fish instanceof Frozen의 평가 결과가 true로 변경되었다. 이를 통해 instanceof 연산자는 프로토타입의 constructor 프로퍼티가 가리키는 생성자 함수를 찾는 것이 아니라 프로토타입 체인 상에 존재하는 프로토타입에 영향을 받는 것을 알 수 있다.
+
+**setPrototype()와 __proto__접근자를 통해 프로토 타입을 바꾸는 경우, 그리고 생성자함수가 가지고있는 prototype에 접근하여 프로토타입을 바꾸는경우의 차이점을 알아두자.**
 ## 12. 직접상속
 ### 12.1. Object.create에 의한 직접상속
+> **Object.create 메소드는 명시적으로 프로토타입을 지정하여 새로운 객체를 생성**한다. Object.create 메소드도 다른 객체 생성 방식과 마찬가지로 추상 연산 ObjectCreate를 호출한다.<br>
+Object.create 메소드의 첫번째 매개변수에는 생성할 객체의 프로토타입으로 지정할 객체를 전달한다. 두번째 매개변수에는 생성할 객체의 프로퍼티를 갖는 객체를 전달한다.<br>두번째 인수는 옵션이므로 생략 가능하다.
+
+    // prototype이 null인 객체이므로 obj333 객체는 프로토타입체인의 종점에 위치한 객체이다.
+    let obj333 = Object.create(null);
+    console.log(Object.getPrototypeOf(obj333)); // null
+    // console.log(obj333.toString()); // typeError : obj333.toString is not a function
+
+    // obj = {}; 만들기
+    obj333 = Object.create(Object.prototype);
+    console.log(Object.getPrototypeOf(obj333) === Object.prototype); // true Object의 프로토타입을 프로토타입으로 갖는다.
+
+    // obj = { x : 1 }; 만들기.
+    obj333 = Object.create(Object.prototype, {
+      x : { value : 1 }
+    });
+    console.log(obj333.x); // 1
+    console.log(Object.getPrototypeOf(obj333) === Object.prototype); // true
+
+    // 사용자 정의 프로토타입으로 설정
+    const myProto = { x : 10 };
+    obj333 = Object.create(myProto);
+    console.log(Object.getPrototypeOf(obj333) === myProto); // true
+    console.log(obj333.x); // 10
+
+    // 생성자함수의 프로토타입으로 설정
+    function Moo(zz){
+      this.zz = zz;
+    }
+    obj333 = Object.create(Moo.prototype);
+    obj333.xx = 'abc';
+    console.log(obj333.xx); // abc
+    console.log(Object.getPrototypeOf(obj333) === Moo.prototype); // true
 ### 12.2. 객체리터럴 내부에서 __proto__에 의한 직접상속
 ## 13. 정적프로퍼티 / 메소드
 ## 14. 프로퍼티 존재확인
