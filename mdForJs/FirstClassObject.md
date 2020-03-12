@@ -88,7 +88,7 @@ __proto__프로퍼티는 [[prototype]] 내부메소드가 가리키는 프로토
 
     // 객체리터럴 방식으로 생성한 객체는 object.prototype의 프로퍼티를 상속받는다.
     // hasOwnProperty 는 object.prototype에게 상속받은 메소드 이다. (__proto__는 단지 object.prototype객체에 접근하기위한 용도일뿐..)
-    console.log(obj.hasOwnProperty('a')); // true
-    console.log(obj.hasOwnProperty('__proto__')); // false
+    console.log(obj.hasOwnProperty('a')); // true 상속받은 프로퍼티가 아니다.
+    console.log(obj.hasOwnProperty('__proto__')); // false 상속받은 프로퍼티이다.
 ### 2.6. prototpye 프로퍼티
 > prototype 프로퍼티는 함수객체만이 가지고있는 프로퍼티이다. 일반객체는 prototype 프로퍼티를 가지고있지 않다.

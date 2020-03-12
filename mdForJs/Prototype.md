@@ -363,12 +363,172 @@ prototype 프로퍼티는 함수가 객체를 생성하는 생성자 함수로 �
 ## 9. 오버라이딩과 프로퍼티 쉐도잉
 > 상속받은 메서드를 하위객체에서 메소드의 내용만 변경해서 재사용하는것을 오버라이딩이라고한다.<br> 하위객체에서 오버라이딩이 일어나면 하위객체에게 메소드를 상속해주는 상위 프로토타입객체의 메소드는 하위객체에서 접근할수 없는 문제점이 생기는데 이것을 프로퍼티 쉐도잉이라고 한다.
 
+    function Book(type, price, title){
+      this.type = type,
+      this.price = price,
+      this.title = title
+    }
+    Book.prototype.bookInformation = function(){
+      console.log(`현재 책의 종류는 ${this.type}입니다.`);
+      console.log(`현재 책의 제목은 ${this.title}입니다.`);
+      console.log(`현재 책의 가격은 ${this.price}입니다.`);
+    }
+    const myBook = new Book('sports',23000,'야구가 좋아');
+    myBook.bookInformation(); // 생성한 객체의 프로토타입의 메서드를 상속받아서 사용했음.
 
+    // 생성된 객체(myBook)에서 prototype의 메서드와 똑같은 이름의 메서드를 다시정의(overriding)
+    myBook.bookInformation = function(){
+      console.log('overriding');
+      console.log(`책의 제목은 ${this.title}입니다.`);
+    };
+
+    // 생성된 객체에서 재정의했던 메서드 호출해보자.
+    myBook.bookInformation(); // prototype 메서드가 아닌 생성된 객체의 bookInformation메서드가 호출되었다.
+
+    // bookInformation메소드를 삭제해보자.
+    delete myBook.bookInformation;
+    myBook.bookInformation(); // 인스턴스의 오버라이딩된 메서드를 삭제했기 때문에 프로토 타입체인에 따라 프로토타입 메서드가 호출되었다.
+이와 같이 하위 객체를 통해 프로토타입의 프로퍼티를 변경 또는 삭제하는 것은 불가능하다. 다시 말해 하위 객체를 통해 프로토타입에 get 액세스는 허용되나 set 액세스는 허용되지 않는다.
+
+프로토타입 프로퍼티를 변경 또는 삭제하려면 하위 객체를 통해 프로토타입 체인으로 접근하는 것이 아니라 프로토타입에 직접 접근하여야 한다.
+
+    function Book(type, price, title){
+      this.type = type,
+      this.price = price,
+      this.title = title
+    }
+    Book.prototype.bookInformation = function(){
+      console.log(`현재 책의 종류는 ${this.type}입니다.`);
+      console.log(`현재 책의 제목은 ${this.title}입니다.`);
+      console.log(`현재 책의 가격은 ${this.price}입니다.`);
+    }
+    const myBook = new Book('sports',23000,'야구가 좋아');
+    // 직접 프로토 타입에 접근해서 메서드를 삭제했다.
+    delete myBook.prototype.bookInformation;
+    myBook.bookInformation(); // TypeError
 ## 10. 프로토타입의 교체
+> 프로토타입은 다른 임의의 객체로 변경할 수 있다. 이것은 부모 객체인 프로토타입을 동적으로 변경할 수 있다는 것을 의미한다. 이러한 특징을 활용하여 객체 간의 상속 관계를 동적으로 변경할 수 있다. 프로토타입은 생성자 함수 또는 인스턴스에 의해 교체할 수 있다.
+
+### 10.1. 생성자 함수에 의한 프로토타입의 교체
+      const Hero = (function (){
+          
+      function SelectHero(name){
+        this.hero = name;
+      }
+
+      // 생성자함수의 prototype 프로퍼티 자체를 교체
+      SelectHero.prototype = {
+        changedHero(){
+          console.log(this.hero);
+        }
+      };
+
+      return SelectHero;
+    })();
+
+    const myHero = new Hero('macree');
+    myHero.changedHero();
+
+    // 원래존재하던 생성자함수의 프로토타입 프로퍼티에 메서드를 할당했을때와 다르게 prototype프로퍼티를 직접할당(재설정)했기 때문에 constructor 프로퍼티가 존재하지않는다.
+    console.log(Object.getOwnPropertyNames(myHero.__proto__)); // [ 'changedHero' ] 
+
+    // constructor 프로퍼티가 존재하지 않기때문에 인스턴스와 생성자함수간의 링크가 끊기게된다.
+    console.log(myHero.constructor === Hero); // false
+
+    // 생성자함수의 프로토타입과의 연결이 끊어져 있기때문에 prototype 체인에 의해서 Object.prototype의 constructor 메서드를 상속받은것이 된다.
+    console.log(myHero.constructor === Object); // true
+끊어진 인스턴스와 생성자 함수간의 연결을 다시해보자...
+
+    // 끊어져 있는 생성자함수와의 연결을 다시 해주자.
+    SelectHero.prototype = {
+      constructor : SelectHero,
+      changedHero(){
+        console.log(this.hero);
+      }
+    };
+
+    // 생성자함수와 인스턴스가 prototype 프로퍼티의 constructor로 연결되어있는지 확인.
+    console.log(myHero.constructor === SelectHero); // true
+
+
+### 10.2. 인스턴스에 의한 프로토타입의 교체
+> 프로토타입은 생성자 함수의 prototype 프로퍼티 뿐만 아니라 인스턴스의 __proto__접근자 프로퍼티로 접근할 수 있다. 따라서 인스턴스의 __proto__접근자 프로퍼티(또는 Object.setPrototypeOf 메소드)를 통해 프로토타입을 교체할 수 있다.<br>생성자 함수의 prototype 프로퍼티에 다른 임의의 객체를 바인딩하는 것은 미래에 생성할 인스턴스의 프로토타입을 교체하는 것이다. __proto__접근자 프로퍼티를 통해 프로토타입을 교체하는 것은 이미 생성된 객체의 프로토타입을 교체하는 것이다.
+
+    function Something2(material){
+      this.material = material;
+    }
+    const turtle = new Something2('turtle');
+
+    // 생성된 인스턴스를 통해서 추가할 프로토타입 메서드
+    const info = {
+      age () {
+        console.log(`${turtle}'s age is 89 years old`);
+      }
+    };
+
+    // 인스턴스로 프로토타입 추가.
+    Object.setPrototypeOf(turtle, info);
+
+    // 다른방식으로 프로토타입을 추가할수 있다.
+    // turtle.__proto__ = info;
+
+    turtle.age();
+인스턴스에 의한 프로토타입의 교체도 생성자함수에 의한 프로토타입 교체와 마찬가지로 생성자함수와의 연결이 끊어지게된다.
+
+    console.log(turtle.constructor === Something2); // false
+    console.log(turtle.constructor === Object) // true
+    // constructor 프로퍼티는 생성자함수에의해 상속받은것이 아니라 Object.prototype을 통해 상속받았다.
+인스턴스에 의한 프로토타입 교체도 constructor 프로퍼티를 추가하여 생성자함수와의 연결을 해주도록하자.
+
+    const turtle = new Something2('turtle');
+
+    const info = {
+      constructor : Something2,
+      age () {
+        console.log(`${turtle}'s age is 89 years old`);
+      }
+    };
+
+    turtle.setPrototypeOf(info, age);
+
+    console.log(turtle.constructor === Somthing2); // true
+
 ## 11. instanceof 연산자
+> instanceof 연산자는 이항 연산자로서 좌변에 객체를 가기키는 식별자, 우변에 생성자 함수를 가리키는 식별자를 피연산자로 받는다. 만약 우변의 피연산자가 함수가 아닌 경우, TypeError가 발생한다.<br>
+**좌변의 객체가 우변의 생성자 함수와 연결된 인스턴스라면 true로 평가되고 그렇지 않은 경우에는 false로 평가된다.** **instanceof 연산자는 상속 관계를 고려**한다는 것에 주의하기 바란다.
+
+    function Frozen(material){
+      this.material = material;
+    }
+
+    const fish = new Frozen('fish');
+
+    // Frozen생성자 함수가 생성한 인스턴스이고 생성자함수의 prototype프로퍼티의 construnctor로 연결되어 있으므로 true
+    console.log(fish instanceof Frozen); // true
+
+    // 최상위 객체의 Object.Prototype과도 프로토타입 체인을 통해 연결되어있으므로 true
+    console.log(fish instanceof Object); // true
+
+    // 인스턴스를 통해 생성자 함수의 프로토타입을 재할당해보자.
+    const ss = {}; // 교체할 프로토타입 프로퍼티
+    Object.setPrototypeOf(fish, ss);
+
+    // 인스턴스에의한 프로퍼티에 constructor 프로퍼티가 없기 때문에 생성자함수와 instance사이에 링크가 끊겨있다.
+    console.log(fish instanceof Frozen); // false
+
+    // 재할당한 프로토타입이 생성자함수를 가리키지 않기때문에 false값을 반환했을지 모르기 때문에 확인을 해보자
+    ss.constructor = Frozen;
+    console.log(fish instanceof Frozen); //false
+
+    // 재설정한 프로토타입의 프로퍼티 constructor 와는 관계가 없는것 같다. 이번에는 setPrototypeOf대신 생성자함수의 프로퍼티로 존재하는 prototype에 직접 프로퍼티추가를 해보자.
+    const rr = { some(){} };
+    Frozen.prototype = rr;
+    tt = Object.getOwnPropertyNames(Frozen.prototype); // [ 'some' ] contructor가 없는 상태.
+    console.log(fish instanceof Frozen); // true constructor가 없어도 true가 반환
+fish instanceof Frozen의 평가 결과가 true로 변경되었다. 이를 통해 instanceof 연산자는 프로토타입의 constructor 프로퍼티가 가리키는 생성자 함수를 찾는 것이 아니라 프로토타입 체인 상에 존재하는 프로토타입에 영향을 받는 것을 알 수 있다.
 ## 12. 직접상속
 ### 12.1. Object.create에 의한 직접상속
-### 12.2. 객체리터럴 내부에서 __proto__에 의한 직접상송
+### 12.2. 객체리터럴 내부에서 __proto__에 의한 직접상속
 ## 13. 정적프로퍼티 / 메소드
 ## 14. 프로퍼티 존재확인
 ## 15. 프로퍼티 열거
