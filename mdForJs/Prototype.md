@@ -563,9 +563,118 @@ Object.create 메소드의 첫번째 매개변수에는 생성할 객체의 프�
     obj333.xx = 'abc';
     console.log(obj333.xx); // abc
     console.log(Object.getPrototypeOf(obj333) === Moo.prototype); // true
+Object.create에 의한 객체 생성의 특징
+- new 연산자가 없이도 객체를 생성할 수 있다.
+
+- 객체리터럴에 의해 생성된 객체도 특정객체를 상속 받을 수 있다.
+- 프로토타입을 지정하면서 객체를 생성 할 수 있다.
+
+Object.prototype의 빌트인 메소드인 Object.prototype.hasOwnProperty, Object.prototype.isPrototypeOf, Object.prototype.propertyIsEnumerable 등은 모든 객체의 프로토타입 체인의 종점, 즉 Object.prototype의 메소드이므로 모든 객체가 상속받아 호출할 수 있다.
+
+하지만 Object.create로 프로토타입이 null인 객체를 생성하면 어떨지 아래 코드를 보자.
+
+    const obj333 = Object.creat(null);
+    obj333.a = 1;
+
+    console.log(Object.getPrototypeOf(obj333) === null) // obj333이 프로토타입체인 종점에위치한것을 확인.
+
+    // 프로토타입체인상 종점에 위치하기 때문에 Object.prototype의 빌트인 메서드를 사용할 수 없다.
+    console.log(obj.hasOwnProperty('a')) // TypeError
+
+    // 따라서 이와같은 에러를 발생시키는 상황을 방지하기 위해 Object.prototype메서드는 아래와 같이 간접접으로 호출하도록하자.
+    console.log(Object.prototype.hasOwnProperty.call(obj333, 'a'));
 ### 12.2. 객체리터럴 내부에서 __proto__에 의한 직접상속
+> ES6에서는 객체 리터럴 내부에서 __proto__접근자 프로퍼티를 사용하여 직접상속을 구현할 수 있다.
+
+    const parent = { x : 10 };
+    const child = {
+      y : 20,
+      __proto__ : parent
+    };
+    console.log(child.x, child.y); // 10 20
+    console.log(Object.getPrototypeOf(child)); // { x : 10 }
+    console.log(Object.getPrototypeOf(child23) === parent23); // true
 ## 13. 정적프로퍼티 / 메소드
+> 정적(static) 프로퍼티/메소드는 생성자 함수로 인스턴스를 생성하지 않아도 참조/호출할 수 있는 프로퍼티/메소드를 말한다. <br> this바인딩을 하지않는 프로퍼티의 값이나 메서드는 static메서드로 선언을 할 수 있다는 것을 알고 static 프로퍼티를 만들어야 할때와 prototype 프로퍼티를 만들어야할 때를 잘 구분해두록 하자.
+
+    function Lizard(x) {
+      this.Lizard = x;
+    }
+
+    Lizard.prototype.speices = function (){
+      console.log(`${this.Lizard}`);
+    };
+
+    // 생성자 함수안에 추가한 static프로퍼티와 static메서드(정적메서드) 메서드에서 this 바인딩을 하지 않는다.
+    Lizard.x = 'static value';
+    Lizard.y = function() {
+      console.log('static method가 호출되었습니다.');
+    };
+
+    const LeopardLizard = new Lizard('Leopard');
+
+    console.log(LeopardLizard.x); // undefined static 프로퍼티이기때문에 인스턴스로 호출 불가능
+    console.log(Lizard.x); // static 프로퍼티는 생성자함수로 접근
+    LeopardLizard.speices(); // Leopard 생성자함수의 prototype만 접근가능
+
+    // 만약 인스턴스로 static 프로퍼티를 호출하게 되면 TypeError
+    LeopardLizard.y(); // TypeError
+
+앞에서 살펴본 Object.create 메소드는 Object 생성자 함수의 정적 메소드이고 Object.prototype.hasOwnProperty 메소드는 Object.prototype의 메소드이다. 따라서 Object.create 메소드는 인스턴스, 즉 Object 생성자 함수가 생성한 객체로 호출할 수 없다. 하지만 Object.prototype.hasOwnProperty 메소드는 모든 객체의 프로토타입 체인의 종점, 즉 Object.prototype의 메소드이므로 모든 객체가 호출할 수 있다.
+
+    function TraceThisFunc(){}
+    TraceThisFunc.prototype.trace = function(){
+      console.log('this method is prototype');
+    }
+    TraceThisFunc.staticTrace = function(){
+      console.log('this method is static');
+    }
+
+    // 인스턴스를 생성하기전에 static method 호출해보자
+    TraceThisFunc.staticTrace(); // this method is prototype
+
+    // 인스턴스를 생성하기전에 prototype method 호출
+    TraceThisFunc.trace(); // TypeError
+
+    const m = new TraceThisFunc('dedication');
+
+    // 인스턴스를 생성하고 static method 호출
+    m.staticTrace(); // TypeError
+
+    // 인스턴스를 생성하고 prototype method 호출
+    m.trace(); // this method is prototype
+MDN 문서에는 정적 프로퍼티/메소드와 프로토타입 프로퍼티/메소드를 구분하고 소개하고 있다. 따라서 표기법만으로도 정적 프로퍼티/메소드와 프로토타입 프로퍼티/메소드를 구별할 수 있어야 한다.
+
+참고로 프로토타입 프로퍼티/메소드를 표기할 때 prototype을 #으로 표기(예를들어 Object.prototype.isPrototypeOf을 Object#isPrototypeOf으로 표기)하는 경우도 있으니 알아두도록 하자.
+
 ## 14. 프로퍼티 존재확인
+> in 연산자는 객체 내에 프로퍼티가 존재하는지 여부를 확인한다.<br> hasOwnProperty() 메서드도 프로퍼티 존재 여부를 확인할수 있지만 in 연산자와 hasOwnProperty의 차이점이 존재한다는 것을 숙지하도록하자.<br>
+
+    const someObj = {
+      x : 'property x',
+      y : 'property y'
+    }
+
+    // x와 y 프로퍼티는 someObj객체의 프로퍼티이기 때문에 true가 나온다.
+    console.log('x' in someObj); // true
+    console.log('y' in someObj); // true
+
+    // someObj에 toString 이라는 프로퍼티가 없지만 true가 나왔다.
+    // 그 이유는 프로토타입 체인에 의해 Object.Prototype으로 부터 someObj객체가 toString 프로퍼티를 상속 받았기 때문이다.
+    // 즉 in연산자는 프로토타입 체인에의해 검색되는 모든 프로퍼티를 검색하고 가지고 있을때 true를 반환한다는것을 알 수 있다.
+    console.log('toString' in someObj); // true
+
+    // z 프로퍼티는 없기때문에 false
+    console.log('z' in someObj); // false
+
+    // hasOwnProperty 메서드는 상속을 고려하지않는다.
+    console.log(someObj.hasOwnProperty('x')); // true
+    console.log(someObj.hasOwnProperty('z')); // false
+
+    // toString 프로퍼티는 프로토타입 체인에 의해 상속받은 프로퍼티이기 때문에 false
+    console.log(someObj.hasOwnProperty('toString')); // false
+
 ## 15. 프로퍼티 열거
 ### 15.1. for...in문
+
 ### 15.2. Object.keys/values/entries 메소드
