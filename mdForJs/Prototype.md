@@ -334,8 +334,8 @@ prototype 프로퍼티는 함수가 객체를 생성하는 생성자 함수로 �
 > 즉시실행 함수로 생성자함수의 정의, 생성자함수의 프로토 타입 메소드정의를 하고 생성자함수자체를 리턴하여 리턴한 생성자함수로 객체를 생성하는방식.
 
     const Calculator = (function(){
-      let _x = 0;
-      let _y = 0;
+      let _x = 20;
+      let _y = 30;
 
       function Calc(x,y){
         _x = x;
@@ -676,5 +676,91 @@ MDN 문서에는 정적 프로퍼티/메소드와 프로토타입 프로퍼티/�
 
 ## 15. 프로퍼티 열거
 ### 15.1. for...in문
+> 객체의 모든 프로퍼티를 순회하며 열거(enumeration)하려면 for…in 문을 사용한다.
 
+    const obj1234 = {
+      arr : [1],
+      obj : { first : 1 },
+      func() { console.log('method');},
+      prop : 123
+    };
+
+    // key변수에 obj 객체의 프로퍼티 키가 바인딩(문법상 key변수만 사용가능)
+    for(const key in obj1234){
+      console.log(key + ': ' + obj1234[key]);
+    }
+
+    // ojb1234객체의 상위 프로토타입에 프로퍼티를 추가하고 for in 문으로 확인해보자
+    Object.prototype.someProp = 1000;
+    obj1234.__proto__ = { a : 123 };
+
+    // obj1234 객체는 프로퍼티 toString 프로퍼티를 상속받아 사용할수 있는 상태이다.
+    console.log('toString' in obj1234); // true 
+
+    // 프로퍼티 키가 심볼일 경우.
+    const sym = Symbol();
+    obj1234[sym] = 99;
+
+    // 상속받은 toString 프로퍼티와 symbol프로퍼티는 열거되지않는다.
+    for(const key in obj1234){
+      console.log(key + ': ' + obj1234[key]);
+    }
+
+    // 상속을 받았지만 Enumerable 값이 false인 프로퍼티는 열거되지 않는다.
+    console.log(Object.getOwnPropertyDescriptor(Object.prototype, 'toString')); // ... enumerable : false
+
+    // 만약 객체 자신만의 프로퍼티를 for in 문을 사용하여 열거하고 싶은경우는 hasOwnProperty 메서드를 사용하여 확인을 해준다.
+    for(const key in obj1234){
+      if(!obj1234.hasOwnProperty(key)) continue;
+      console.log(key + ': '+ obj1234[key]);
+    }
+
+위 예제의 결과는 person 객체의 프로퍼티가 정의된 순서대로 열거되었다. 하지만 for…in 문은 프로퍼티를 열거할 때 순서를 보장하지 않으므로 주의하기 바란다. 하지만 대부분의 모던 브라우저는 순서를 보장하고 숫자(사실은 문자열)인 프로퍼티 키에 대해서는 정렬을 실시한다.
+
+for…in 문은 객체의 프로토타입 체인 상에 존재하는 모든 프로토타입의 프로퍼티 중에서 프로퍼티 어트리뷰트 [[Enumerable]]의 값이 ture인 프로퍼티를 순회하며 열거(enumeration)한다.
+
+    const arr5 = [1,2,3,6];
+    arr5.x = 7;
+
+    // 1 2 3 7
+    for(const i in arr5){
+      console.log(arr5[i]);
+    }
+
+    // 1 2 3
+    for(let i = 0; i < arr5.length; i++){
+      console.log(arr5[i]);
+    }
+
+    // 1 2 3
+    arr5.forEach(index => console.log(index));
+
+    // for of 연산자는 변수 선언문에 key가아닌 값을 할당한다.
+    for(const value of arr5){
+      console.log(value); // 1 2 3 6
+    }
+배열에는 for…in 문을 사용하지 말고 일반적인 for 문이나 for…of 문 또는 Array.prototype.forEach 메소드를 사용하기를 권장한다. 사실 배열도 객체이므로 프로퍼티와 상속받은 프로퍼티가 포함될 수 있다.
 ### 15.2. Object.keys/values/entries 메소드
+> 지금까지 살펴보았듯이 for…in 문은 객체 자신의 프로퍼티 뿐만 아니라 상속받은 프로퍼티도 열거한다. 따라서 Object.prototype.hasOwnProperty 메소드를 사용하여 객체 자신의 프로퍼티인지 확인하는 추가 처리가 필요하다.<br><br>객체 자신의 프로퍼티만을 열거하기 위해서는 for…in 문을 사용하는 것 보다 Object.keys/values/entries 메소드를 사용하는 것을 권장한다.
+
+    const person = {
+      name: 'Lee',
+      address: 'Seoul',
+      __proto__: { age: 20 }
+    };
+
+    // enumerable : true인  키를 열거
+    console.log(Object.keys(person)); // ["name", "address"]
+
+    // enumerable : true인  값을 열거
+    console.log(Object.values(person)); // ["Lee", "Seoul"]
+
+    // ES8에서 도입된 Object.entries 메소드는 객체 자신의 열거 가능한 프로퍼티 키와 값의 쌍의 배열을 배열에 담아 반환한다.
+
+    console.log(Object.entries(person)); // [["name", "Lee"], ["address", "Seoul"]]
+
+    Object.entries(person).forEach(([key, value]) => console.log(key, value));
+    /*
+    name Lee
+    address Seoul
+    */
