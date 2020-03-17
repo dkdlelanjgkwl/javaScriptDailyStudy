@@ -544,7 +544,7 @@ Object.create 메소드의 첫번째 매개변수에는 생성할 객체의 프�
 
     // obj = { x : 1 }; 만들기.
     obj333 = Object.create(Object.prototype, {
-      x : { value : 1 }
+      x : { value : 1 } // discritor객체 추가...value 외의 다른 프로퍼티는 기본값으로 설정.(enumerable,writable,configurable)
     });
     console.log(obj333.x); // 1
     console.log(Object.getPrototypeOf(obj333) === Object.prototype); // true
@@ -589,7 +589,7 @@ Object.prototype의 빌트인 메소드인 Object.prototype.hasOwnProperty, Obje
     const parent = { x : 10 };
     const child = {
       y : 20,
-      __proto__ : parent
+      __proto__ : parent // __proto__ 고의적인 overriding
     };
     console.log(child.x, child.y); // 10 20
     console.log(Object.getPrototypeOf(child)); // { x : 10 }
