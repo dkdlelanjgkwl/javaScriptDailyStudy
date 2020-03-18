@@ -196,3 +196,41 @@ this는 자바스크립트 엔진에 의해 암묵적으로 생성되며 코드 
       console.log('aaa', this.someVal); // aaa 100
     }
     display.call();
+**apply와 call 메소드의 대표적인 용도는 arguments 객체와 같은 유사 배열 객체에 배열 메소드를 사용하는 경우이다. arguments 객체는 배열이 아니기 때문에 Array.prototype.slice와 같은 배열의 메소드를 사용할 수 없으나 apply와 call 메소드를 이용하면 가능하다.**
+
+    /* arguments 객체는 유사배열 객체이다. 
+    때문에 Array.prototype 메소드를 상속받아 사용할 수 없지만 
+    call을 통한 간접호출로 Array.prototype 메소드를 사용할 수 있다.
+    */
+    function CovertArgsToArray() {
+      const arr = Array.prototype.slice.call(arguments);
+      return arr;
+    }
+    console.log(CovertArgsToArray(1, 2, 3));
+**콜백 함수 내부의 this를 콜백 함수를 호출하는 외부 함수 내부의 this와 일치시켜 주어야 할때**
+
+    function Person(name) {
+      this.name = name;
+    }
+
+    Person.prototype.doSomething = function (callback) {
+      // ①
+      callback.bind(this)();
+      // callback.apply(this);
+      // callback.call(this);
+    };
+
+    function foo() {
+      console.log(this.name); // ②
+    }
+
+    const person = new Person('Lee');
+
+    person.doSomething(foo); // Lee
+
+함수 호출방식 | 일반함수 호출
+:---:|:---:
+| `일반함수 호출` | 전역객체 |
+| `메서드로 호출` | 메서드를 호출한 객체 |
+| `생성자 함수로 호출` | 생성자함수가 미래에 생성할 객체 |
+| `call / bind / apply의 간접호출` | 인수로 전달하는 객체 |
