@@ -345,10 +345,80 @@ DOM 트리를 구성하는 노드로서 갖추어야 할 트리 노드 탐색을
 ### 4.6. 형제노드 탐색
 > 같은 부모노드를 가지는 형제노드를 취득하는방법.<br>Node.portotype.previousSibling/nextSibling 과 Element.prototype.previousElementSibling/nextElementSibling 가 있다.
 
-
+    <!DOCTYPE html>
+    <html lang="ko-KR">
+    <body>
+      <ul id="fruits">
+        <li class="apple">apple</li>
+        <li class="banana">banana</li>
+        <li class="orange">orange</li>
+        <li class="melon">melon</li>
+      </ul>
+      <script>
+        const $fruits = document.querySelector('#fruits');
+        console.log(Object.getPrototypeOf($fruits));
+        const { firstElementChild } = $fruits;
+        console.log(firstElementChild);
+        const { nextElementSibling } = firstElementChild;
+        console.log(nextElementSibling);
+        const { previousElementSibling } = nextElementSibling;
+        console.log(previousElementSibling);
+        const { firstChild } = $fruits;
+        console.log(firstChild);
+        const { nextSibling } = firstChild;
+        console.log(nextSibling);
+        const { previousSibling } = nextSibling;
+        console.log(previousSibling);
+      </script>
+    </body>
+    </html>
 ## 5. 노드 정보취득
+프로퍼티 | 설명
+:---:|:---:
+Node.prototype.nodeType	|노드객체의 종류를 나타내는 상수를 반환한다
+Node.prototype.nodeName | 노드의 이름을 문자열로 반환한다.
+
+    <!DOCTYPE html>
+    <html>
+      <body>
+        <div id="foo">Hello</div>
+      </body>
+      <script>
+        // 문서 노드의 정보
+        console.log(document.nodeType); // 9
+        console.log(document.nodeName); // #document
+
+        // 요소 노드의 정보
+        const $foo = document.getElementById('foo');
+        console.log($foo.nodeType); // 1
+        console.log($foo.nodeName); // DIV
+
+        // 텍스트 노드의 정보
+        const $textNode = $foo.firstChild;
+        console.log($textNode.nodeType); // 3
+        console.log($textNode.nodeName); // #text
+    </script>
+    </html>
 ## 6. 요소 노드의 텍스트 조작
+### 6.1. nodeValue
+### 6.2. TextContent
 ## 7. DOM조작
+### 7.1 HTML문자열을 파싱하여 DOM노드 추가
+#### 7.1.1. innerHTML
+#### 7.1.2. TextContent
+### 7.2. 노드를 직접 생성하는 메서드
+#### 7.2.1. createElement (요소노드 생성)
+#### 7.2.2. createTextNode (텍스트 노드 생성)
+### 7.3. appendChild 메서드
+1. 텍스트 노드를 요소노드의 자식요소로 추가
+1. 요소노드를 DOM에 추가
+1. 복수의 노드생성과 추가
+1. DocumentFragment
+### 7.4. insertBefore 메서드
+### 7.5 노드 이동(appendChild, insertBefore)
+### 7.6. cloneNode 메서드 (노드 복사)
+### 7.7. replaceChild 메서드 (노드 교체)
+### 7.8. removeChild 메서드 (노드 삭제)
 ## 8. 어트리뷰트
 ## 9. 스타일
 ## 10. DOM표준
