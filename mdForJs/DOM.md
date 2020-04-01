@@ -403,11 +403,102 @@ Node.prototype.nodeName | 노드의 이름을 문자열로 반환한다.
 ### 6.1. nodeValue
 ### 6.2. TextContent
 ## 7. DOM조작
-### 7.1 HTML문자열을 파싱하여 DOM노드 추가
-#### 7.1.1. innerHTML
-#### 7.1.2. TextContent
+### 7.1 HTML문자열을 파싱하여 DOM노드로 추가
+#### 7.1.1. innerHTML 메소드
+> Element.prototype.innerHTML 프로퍼티는 getter/setter 모두 존재하는 접근자 프로퍼티이다.<br> 요소노드의 HTML마크업 문자열을 취득하거나 변경할수 있는 프로퍼티이다.
+
+    <!DOCTYPE html>
+    <html lang="ko-KR">
+    <body>
+      <ul id="fruits">
+        <li class="apple">apple</li>
+        <li class="banana">banana</li>
+        <li class="orange">orange</li>
+        <li class="melon">melon</li>
+      </ul>
+      <script>
+        const $fruits = document.querySelector('#fruits');
+        
+        // innerHTML로 마크업요소 취득
+        console.log($fruits.innerHTML);
+
+        // 마크업요소 추가
+        $fruits.innerHTML += '<li>strawBerry</li>';
+
+        // 마크업요소 갱신
+        $fruits.innerHTML = '<li>Hello</li>';
+
+        // 마크업 초기화
+        $fruits.innerHTML = '';
+      </script>
+    </body>
+    </html>
+#### 7.1.2. innerHTML의 문제점
+요소 노드의 innerHTML 프로퍼티에 할당한 HTML 마크업 문자열은 렌더링 엔진에 의해 파싱되어 요소 노드의 자식으로 DOM에 반영된다. 이때 **사용자로부터 입력 받은 데이터(untrusted input data)를 그대로 innerHTML 프로퍼티에 할당하는 것은 크로스 사이트 스크립팅 공격(XSS: Cross-Site Scripting Attacks)에 취약하므로 위험하다.**
+
+**1 .HTML sanitization**<br>
+HTML 새니티제이션(HTML sanitization)은 사용자로부터 입력 받은 데이터(untrusted input data)에 의해 발생할 수 있는 크로스 사이트 스크립팅 공격을 예방하기 위해 잠재적 위험을 제거하는 기능을 말한다.<br>새니티제이션 함수를 직접 구현할 수도 있겠지만 DOMPurify 라이브러리를 사용하는 것을 추천한다.
+DOMPurify는 아래와 같이 잠재적 위험을 내포한 HTML 마크업을 새니티제이션(살균)하여 잠재적 위험을 제거한다.
+```DOMPurify.sanitize('<img src=x onerror=alert(1)//>'); // => <img src="x">```
+DOMPurify는 2014년 2월부터 제공되기 시작했으므로 어느 정도 안정성이 보장된 새니티제이션 라이브러리라고 할 수 있다.
+
+**2. 기존의 Node를 제거 하고 다시파싱과정을 수행하여 DOM을 변경 (효율성측면에서 문제)**
+```
+$fruits.innerHTML += '<li class="banana">Banana</li>';
+```
+위 코드는 아래코드의 축약표현이다.
+```
+$fruits.innerHTML = $fruits.innerHTML + '<li class="banana">Banana</li>';
+// '<li class="apple">Apple</li>' + '<li class="banana">Banana</li>'
+```
+이처럼 innerHTML 프로퍼티에 HTML 마크업 문자열을 할당하면 유지되어도 좋은 기존의 자식 노드까지 모두 제거하고 다시 처음부터 자식 노드를 생성하여 DOM에 반영한다. 이는 효율적이지 않다.
+
+**3. 새로운 요소를 추가할때 삽입되는 위치를 특정할 수 없음.**
+```
+<ul id="fruits">
+  <li class="apple">Apple</li>
+  <li class="orange">Orange</li>
+</ul>
+```
+li.apple 요소와 li.orange 요소 사이에 새로운 요소를 삽입하고 싶은 경우, innerHTML 프로퍼티를 사용하면 위치를 지정할 수 없다. 이처럼 innerHTML 프로퍼티는 복잡하지 않은 요소를 새롭게 추가할 때 유용하지만 기존 요소를 제거하지 않으면서 위치를 지정해 새로운 요소를 삽입해야 할 때는 사용하지 않는 것이 좋다.
+#### 7.1.2. insertAdjancentHTML 메소드
+> Element.prototype.insertAdjancetnHTML 메소드는 기존요소를 제거하지 않으면서 위치를 지정해서 요소를 삽입한다.
+
+```
+Element.prototype.insertAdjancentHTML(position, DOMString)
+```
+insertAdjacentHTML 메소드는 두번째 인수로 전달한 HTML 마크업 문자열(DOMString)을 파싱하고 그 결과로 생성된 노드를 첫번째 인수로 전달한 위치(position)에 삽입하여 DOM에 반영한다. 첫번째 인수로 전달할 수 있는 문자열은 ‘beforebegin’, ‘afterbegin’, ‘beforeend’, ‘afterend’ 4가지이다.
+```
+<!DOCTYPE html>
+<html>
+  <body>
+    <!-- beforebegin -->
+    <div id="foo">
+      <!-- afterbegin -->
+      text
+      <!-- beforeend -->
+    </div>
+    <!-- afterend -->
+  </body>
+  <script>
+    const $foo = document.getElementById('foo');
+
+    $foo.insertAdjacentHTML('beforebegin', '<p>beforebegin</p>');
+    $foo.insertAdjacentHTML('afterbegin', '<p>afterbegin</p>');
+    $foo.insertAdjacentHTML('beforeend', '<p>beforeend</p>');
+    $foo.insertAdjacentHTML('afterend', '<p>afterend</p>');
+  </script>
+</html>
+```
+insertAdjacentHTML 메소드는 기존 요소에는 영향을 주지 않고 새롭게 삽입될 요소만을 파싱하여 DOM에 반영하므로 기존의 자식 노드를 모두 제거하고 다시 처음부터 자식 노드를 생성하여 DOM에 반영하는 innerHTML 프로퍼티보다 효율적이고 빠르다.
+
+단, innerHTML 프로퍼티와 마찬가지로 insertAdjacentHTML 메소드는 HTML 마크업 문자열을 파싱하므로 크로스 사이트 스크립팅 공격에 취약하다는 점은 동일하다.
 ### 7.2. 노드를 직접 생성하는 메서드
 #### 7.2.1. createElement (요소노드 생성)
+> Document.prototype.createElement(tagName) 메소드는 요소 노드를 생성하여 반환한다. createElement 메소드의 매개변수 tagName에는 태그 이름을 나타내는 문자열을 전달한다.
+```
+
+```
 #### 7.2.2. createTextNode (텍스트 노드 생성)
 ### 7.3. appendChild 메서드
 1. 텍스트 노드를 요소노드의 자식요소로 추가
