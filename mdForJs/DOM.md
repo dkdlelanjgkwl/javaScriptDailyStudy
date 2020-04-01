@@ -876,6 +876,56 @@ console.log($li); // <li>HTML5</li>
 </html>
 ```
 ## 8. 어트리뷰트
+```
+<!DOCTYPE html>
+<html lang="ko-KR">
+<body>
+  <input id="user" type="text" value="lki"></input>
+  <script>
+    const $input = document.querySelector('input');
+    console.log($input);
+    const $attr = $input.attributes; // or const { attributes } = $input;
+    console.log($attr); // NamedNodeMap {0: id, 1: type, 2: value, id: id, type: type, value: value, length: 3}
 
+    // 취득한 attributes 값을 console.log로 확인.
+    [...$attr].forEach((el) => console.log(el)); // id="user" type="text" value="lki"
+    [...$attr].forEach((el) => console.log(el.value)); // user text lik
+  </script>
+</body>
+</html>
+```
+HTML 문서가 파싱될 때, HTML 요소의 어트리뷰트(HTML 어트리뷰트)는 어트리뷰트 노드로 변환되어 요소 노드 객체의 형제 노드로 추가된다. 이때 HTML 어트리뷰트 당 하나의 어트리뷰트 노드가 생성된다. 즉, 위 input 요소는 3개의 어트리뷰트가 있으므로 3개의 어트리뷰트 노드가 생성된다.
+
+이때 모든 어트리뷰트 노드의 참조는 유사 배열 객체이자 이터러블인 NamedNodeMap 객체에 담겨서 요소 노드의 arrtibutes 프로퍼티에 저장된다.
+
+따라서 요소 노드의 모든 어트리뷰트 노드는 요소 노드의 Element.prototype.attributes 프로퍼티로 취득할 수 있다. attributes 프로퍼티는 getter만 존재하는 읽기 전용 접근자 프로퍼티이며 요소 노드의 모든 어트리뷰트 노드의 참조가 담긴 NamedNodeMap 객체를 반환한다.
+
+### 8.1. HTML 어트리뷰트 조작
+앞에서 살펴본 바와 같이 요소 노드의 attributes 프로퍼티는 getter만 존재하는 읽기 전용 접근자 프로퍼티이므로 HTML 어트리뷰트 값을 취득할 수 있지만 변경은 할 수 없다. 또한 attributes 프로퍼티를 통해야만 HTML 어트리뷰트 값을 취득할 수 있기 때문에 불편하다.
+
+Element.prototype.getAttribute/getAttribute 메소드를 사용하면 attributes 프로퍼티를 통하지 않고 요소 노드에서 메소드를 통해 직접 HTML 어트리뷰트 값을 취득하거나 변경할 수 있어서 편리하다.
+
+HTML 어트리뷰트 값을 참조하려면 Element.prototype.getAttribute(attributeName) 메소드를 사용하고 HTML 어트리뷰트 값을 변경하려면 Element.prototype.setAttribute(attributeName, attributeValue) 메소드를 사용한다.
+
+```
+<!DOCTYPE html>
+<html lang="ko-KR">
+<body>
+  <input id="user" type="text" value="lki"></input>
+  <script>
+    const $input = document.querySelector('input');
+
+    // 요소의 value attribute의 값을 읽기.
+    let inputValue = $input.getAttribute('value');
+    console.log(inputValue);
+
+    // 요소의 value attribute값을 foo로 변경하기
+    $input.setAttribute('value', 'foo');
+    inputValue = $input.getAttribute('value');
+    console.log(inputValue);
+  </script>
+</body>
+</html>
+```
 ## 9. 스타일
 ## 10. DOM표준
