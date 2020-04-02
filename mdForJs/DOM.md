@@ -903,7 +903,7 @@ HTML 문서가 파싱될 때, HTML 요소의 어트리뷰트(HTML 어트리뷰�
 ### 8.1. HTML 어트리뷰트 조작
 앞에서 살펴본 바와 같이 요소 노드의 attributes 프로퍼티는 getter만 존재하는 읽기 전용 접근자 프로퍼티이므로 HTML 어트리뷰트 값을 취득할 수 있지만 변경은 할 수 없다. 또한 attributes 프로퍼티를 통해야만 HTML 어트리뷰트 값을 취득할 수 있기 때문에 불편하다.
 
-Element.prototype.getAttribute/getAttribute 메소드를 사용하면 attributes 프로퍼티를 통하지 않고 요소 노드에서 메소드를 통해 직접 HTML 어트리뷰트 값을 취득하거나 변경할 수 있어서 편리하다.
+Element.prototype.getAttribute/setAttribute 메소드를 사용하면 attributes 프로퍼티를 통하지 않고 요소 노드에서 메소드를 통해 직접 HTML 어트리뷰트 값을 취득하거나 변경할 수 있어서 편리하다.
 
 HTML 어트리뷰트 값을 참조하려면 Element.prototype.getAttribute(attributeName) 메소드를 사용하고 HTML 어트리뷰트 값을 변경하려면 Element.prototype.setAttribute(attributeName, attributeValue) 메소드를 사용한다.
 
@@ -927,5 +927,65 @@ HTML 어트리뷰트 값을 참조하려면 Element.prototype.getAttribute(attri
 </body>
 </html>
 ```
+HTML 어트리뷰트의 존재확인을 하려면 Element.prototype.hasAttribute(attributeName) 메서드를 사용하고 HTML어트리뷰트를 삭제하려면 Element.prototype.removeAttribute(atrributeName) 메서드를 사용한다.
+```
+<!DOCTYPE html>
+<html lang="ko-KR">
+<body>
+  <input id="user" type="text" value="lki"></input>
+  <script>
+    const $input = document.querySelector('input');
+
+    if($input.hasAttribute('id')) $input.removeAttribute('id');
+
+    console.log($input.hasAttribute('id')); // false
+    
+  </script>
+</body>
+</html>
+```
+### 8.2. HTML어트리뷰트와 DOM프로퍼티
+요소 노드객체에는 HTML 어트리뷰트에 대응하는 프로퍼티(이하 DOM프로퍼티)가 존재한다. 이 DOM프로퍼티는 HTML어트리뷰트 값을 초기값으로 가지고 있다. DOM프로퍼티는 setter와 getter 모두 존재하는 접근자 프로퍼티이다. 따라서 DOM프로퍼티는 참조와 변경이 모두 가능한 값이다.
+
+```
+<!DOCTYPE html>
+<html lang="ko-KR">
+<body>
+  <input id="user" type="text" value="lki">
+  <script>
+    const $input = document.querySelector('input');
+
+    console.log($input.value); // lki
+    console.log($input.getAttribute('value') === $input.value); // true
+    $input.value = 'javaScript';
+    console.log($input.value); // javaScript
+    console.log($input.getAttribute('value') === $input.value); // false
+  </script>
+</body>
+</html>
+```
+### 8.3. HTML어트리뷰트와 DOM프로퍼티 대응관계
+대부분의 HTML 어트리뷰트 값은 HTML 어트리뷰트 이름과 동일한 DOM 프로퍼티 키로 참조할 수 있다. 단, 아래와 같이 HTML 어트리뷰트와 DOM 프로퍼티가 언제나 1:1로 대응하는 것은 아니며 HTML 어트리뷰트 이름과 DOM 프로퍼티 키가 반드시 일치하는 것도 아니다.
+
+- id 어트리뷰트와 id프로퍼티는 1:1 대응하며 동일한 값으로 연동한다.
+
+- input 요소의 value 어트리뷰트는 value프로퍼티와 1:1 대응한다.<br>하지만 value 어트리뷰트는 초기상태를 계속 유지하고, value프로퍼티는 최신상태를 유지한다.
+- class 어트리뷰트는 className, classList 프로퍼티와 대응한다.
+- for 어트리뷰트는 htmlFor프로퍼티와 대응한다.
+- td 요소의 colspan 어트리뷰트는 대응하는 프로퍼티가 존재하지 않는다.
+- textContent는 대응하는 어트리뷰트가 존재하지 않는다.
+- 어트리뷰트 이름은 대소문자를 구분하지않지만 대응하는 프로퍼티키는 카멜케이스를 따른다.(maxlength -> maxLength)
+
+### 8.4. HTML 어트리뷰트 노드
+> HTML 어트리뷰트로 지정한 HTML 요소의 초기 상태는 어트리뷰트 노드에서 관리한다. 어트리뷰트 노드에서 관리하는 어트리뷰트 값은 사용자의 입력에 의해 상태가 변경되어도 변하지 않고 HTML 어트리뷰트로 지정한 HTML 요소의 초기 상태를 그대로 유지한다.
+
+어트리뷰트 노드가 관리하는 초기 상태 값을 취득하거나 변경하려면 getAttribute/setAttribute 메소드를 사용한다. getAttribute 메소드로 취득한 값은 어트리뷰트 노드에서 관리하는 HTML 요소에 지정한 어트리뷰트 값, 즉 초기 상태 값이다. HTML 요소에 지정한 어트리뷰트 값은 사용자의 입력에 의해 변하지 않으므로 결과는 언제나 동일하다
+
+### 8.5. DOM 프로퍼티
+> 사용자가 입력한 최신 상태는 HTML 어트리뷰트에 대응하는 요소 노드의 DOM 프로퍼티가 관리한다. DOM 프로퍼티는 사용자의 입력에 의한 상태 변화에 반응하여 언제나 최신 상태를 유지한다.
+
+DOM 프로퍼티로 취득한 값은 HTML 요소의 최신 상태 값을 의미한다. 이 최신 상태 값은 사용자의 입력에 의해 언제든지 동적으로 변경되어 최신 상태를 유지한다. 이에 반해, getAttribute 메소드로 취득한 HTML 어트리뷰트 값, 즉 초기 상태 값은 변하지 않고 유지된다.
+
+
 ## 9. 스타일
 ## 10. DOM표준
