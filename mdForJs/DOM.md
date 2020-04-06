@@ -980,12 +980,260 @@ HTML 어트리뷰트의 존재확인을 하려면 Element.prototype.hasAttribute
 > HTML 어트리뷰트로 지정한 HTML 요소의 초기 상태는 어트리뷰트 노드에서 관리한다. 어트리뷰트 노드에서 관리하는 어트리뷰트 값은 사용자의 입력에 의해 상태가 변경되어도 변하지 않고 HTML 어트리뷰트로 지정한 HTML 요소의 초기 상태를 그대로 유지한다.
 
 어트리뷰트 노드가 관리하는 초기 상태 값을 취득하거나 변경하려면 getAttribute/setAttribute 메소드를 사용한다. getAttribute 메소드로 취득한 값은 어트리뷰트 노드에서 관리하는 HTML 요소에 지정한 어트리뷰트 값, 즉 초기 상태 값이다. HTML 요소에 지정한 어트리뷰트 값은 사용자의 입력에 의해 변하지 않으므로 결과는 언제나 동일하다
-
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <input id="user" type="text" value="lki">
+  <script>
+    const $input = document.getElementById('user');
+    // attribute 프로퍼티에 저장된 value 어트리뷰트 값을 읽어옴 
+    console.log($input.getAttribute('value')); // lki
+    /** HTML요소에 저장된 value 어트리뷰트값을 변경
+     *  HTML요소의 어트리뷰트값을 직접 변경(초기값 변경)
+     */
+    $input.setAttribute('value', 'bar');
+  </script>
+</body>
+</html>
+```
 ### 8.5. DOM 프로퍼티
 > 사용자가 입력한 최신 상태는 HTML 어트리뷰트에 대응하는 요소 노드의 DOM 프로퍼티가 관리한다. DOM 프로퍼티는 사용자의 입력에 의한 상태 변화에 반응하여 언제나 최신 상태를 유지한다.
 
 DOM 프로퍼티로 취득한 값은 HTML 요소의 최신 상태 값을 의미한다. 이 최신 상태 값은 사용자의 입력에 의해 언제든지 동적으로 변경되어 최신 상태를 유지한다. 이에 반해, getAttribute 메소드로 취득한 HTML 어트리뷰트 값, 즉 초기 상태 값은 변하지 않고 유지된다.
 
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <input id="user" type="text" value="lki">
+  <input type="checkbox" checked>
+  <script>
+    const $input = document.getElementById('user');
 
+    /** DOM프로퍼티에 저장된 value 값을 변경(최신상태 변경) */
+    $input.value = 'admin';
+    console.log($input.value); // admin
+
+    /** DOM프로퍼티를 변경해도 HTML어트리뷰트는 변경되지 않음. */
+    console.log($input.getAttribute('value')) // lki
+
+    const $checkBox = document.querySelector('input[type=checkbox]');
+
+    /** 요소노드의 프로퍼티로 취득한 값은
+     *  문자열이 아닐 수도 있다.
+     */
+    console.log($checkBox.checked); // true
+
+    /** true false값을 가지는 어트리뷰트 프로퍼티는
+     *  removeAttribute를 사용해서 제어 */
+    $checkBox.removeAttribute('checked');
+    console.log($checkBox.checked); // false
+
+    /** 만약 getAttribute로 true / false값을 가지고 있는
+     *  어트리뷰트 프로퍼티를 읽어오면 '' 빈문자열 혹은 null이
+     *  반환된다. 
+     */
+    console.log($checkBox.getAttribute('checked')); // null
+    
+  </script>
+</body>
+</html>
+```
 ## 9. 스타일
+### 9.1. 인라인 스타일 조작
+HTMLElement.prototype.style 프로퍼티는 getter와 setter 모두 존재하는 접근자 프로퍼티로서 요소노드의 inline style을 취득하거나 변경한다.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div style="color: red">hi, mr.Yesterday</div>
+  <script>
+    const $div = document.querySelector('div');
+    // 인라인 스타일 취득
+    console.log($div.style);
+
+    // 인라인 스타일 변경
+    $div.style.color = 'blue';
+    $div.style.width = '100px';
+    $div.style.heigth = '100px';
+    $div.style.backgroundColor = 'yellow';
+  </script>
+</body>
+</html>
+```
+style 프로퍼티는 CSSStyleDeclaration 타입의 객체를 반환한다. CSSStyleDeclaration 객체는 다양한 CSS프로퍼티 프로퍼티에 대응하는 프로퍼티를 가지고있으며 이 프로퍼티에 값을 할당하면 해당 CSS프로퍼티가 인라인 스타일로 HTML요소에 추가된다.
+
+CSS프로퍼티는 케밥 케이스를 따른다. 이에 대응하는 CSSStyleDeclaration 프로퍼티는 카멜케이스를 따른다. 예를 들어 CSS프로퍼티 background-color에 대응하는 CSSStyleDeclaration 객체의 프로퍼티는 backgroundColor이다.
+```
+$div.style.backgroundColor = 'yellow';
+```
+만약 케밥케이스의 CSS프로퍼티를 그대로 사용하려면 객체의 마침표 표기법대신 대괄호 표기법을 사용한다.
+```
+$div.style['background-color] = 'yellow';
+```
+단위 지정이 필요한 CSS프로퍼티의 값은 반드시 단위를 지정해야한다.
+예를 들어 px, em, %등의 크기 단위가 필요한 width 프로퍼티에 값을 할당할때 단위를 생략하면 CSS프로퍼티는 적용되지 않는다.
+
+### 9.2. class 조작
+#### 9.2.1. className
+Element.prototype.className 프로퍼티는 setter와 getter 모두 존재하는 접근자 프로퍼티로써 요소 노드의 class 어트리뷰트 값을 취득하거나 변경한다.
+
+요소노드의 className 프로퍼티를 참조하면 class 어트리뷰트를 문자열로 반환. 요소노드의 className의 프로퍼티에 문자열을 할당하면 class어트리뷰트 값을 할당한 문자열로 변경
+
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .box {
+      width: 100px; height: 100px;
+      background-color: antiquewhite;
+    }
+    .red {
+      color: red;
+    }
+    .blue {
+      color: blue;
+    }
+  </style>
+</head>
+<body>
+  <div class="box red">hi, mr.Yesterday</div>
+  <script>
+    const $box = document.querySelector('.box');
+    console.log($box.className); // box red
+    /** class 어트리뷰트 값 변경 */
+    $box.className = $box.className.replace('red', 'blue');
+    console.log($box.className); // box blue
+  </script>
+</body>
+</html>
+```
+className프로퍼티는 문자열을 반환하므로 공백으로 구분된 여러개의 클래스를 반환하는 경우 다루기 불편하다.
+#### 9.2.2. classList
+Element.prototype.classList 프로퍼티는 class 어트리뷰트값을 담은 DOMTokenList 객체를 반환한다.
+
+DOMTokenList 객체는 공백문자들로 구분된 토큰들로 구성된 컬렉션 객체로서 유사배열 객체이자 이터러블이다. DOMTokenList 객체는 아래와 같이 유용한 메서드를을 제공한다.
+
+- add(...className)<br>
+<br>인수로 전달한 1개이상의 문자열을 class 어트리뷰트에 추가한다.
+```
+$box.classList.add('class-x','class-y');
+// class="red box class-x class-y"
+```
+- remove(...className)<br>
+<br>인수로 전달한 1개이상의 문자열을 class 어트리뷰트에서 제거.
+```
+$box.classList.remove('class-x','class-y');
+// class="box red"
+```
+- item(index)<br>
+<br>인수로 전달한 index에 해당하는 문자열을 class 어트리뷰트에서 반환한다.
+```
+$box.classList.item(1); // red
+$box.classList.item(0); // box
+```
+- contains(className)<br>
+<br>인수로 전달된 문자열과 일치하는 class가 class 어트리븉에 존재하는지 true / false 값을 리턴
+```
+$box.classList.contains('red'); // true
+$box.classList.contains('blue'); // false
+```
+- replace(oldClass, newClass)<br>
+<br>class 어트리뷰트에서 첫번째 인수로 전달한 문자열을 두번째 인수로 전달한 문자열로 변경한다.
+```
+$box.classList.replace('red', 'blue'); // class="box blue"
+```
+- toggle(className)<br>
+<br>class 어트리뷰트에 인수로 전달한 문자열이 존재하면 삭제하고 존재하지 않으면 추가한다.<br><br>
+두번째 인수로 조건식을 전달할 수 있다. 이때 조건식의 평가결과가 true이면 강제로 인수로 전달받은 문자열을 추가하고 false이면 강제로 제거한다.
+
+```
+$box.classList.toggle('class-x'); // class="box blue class-x"
+$box.classList.toggle('class-x'); // class="box blue"
+
+$box.classList.toggle('red', true); // 강제로 red 추가
+$box.classList.toggle('red', false); // 강제로 red 제거
+```
+이외에도 DOMTokenList 객체는 forEach, entries, keys, values, supports 메서드를 제공한다.
+
+### 9.3. 요소에 적용되어있는 css 스타일 참조
+style프로퍼티는 인라인 프로퍼티만 반환한다. 따라서 클래스를 적용한 스타일이나 상속을 통해 암묵적으로 적용된 스타일은 style프로퍼티로 참조할 수 없다.
+
+HTML 요소에 적용된 모든 CSS스타일을 참조해야 할 경우, window.getComputedStyle(element [,pseudo]) 메서드를 사용한다. 이 메서드를 사용한경우 요소노드(element)에 적용되어있는 평가된 스타일을 CSSStyleDeclaration 객체에 담아서 반환한다.
+
+평가된 스타일이란 요소노드에 적용된 모든 스타일, 즉 링크스타일, 임베딩 스타일, 인라인 스타일, 자바스크립트에서 적용한 스타일, 상속된 스타일, 기본(user agent) 스타일 등 모든 스타일이 조합되어 최종적으로 적용된 스타일을 말한다.
+
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .body {
+      color: red;
+    }
+    .box {
+      width: 100px; height: 100px;
+      background-color: cornsilk;
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">Box</div>
+  <script>
+    const $box = document.querySelector('.box');
+    const computedStyle = window.getComputedStyle($box);
+    console.log(computedStyle); // CSSStyleDeclaration
+
+    // 임베딩 스타일
+    console.log(computedStyle.width); // 100px
+    console.log(computedStyle.height); // 50px
+    console.log(computedStyle.backgroundColor); // rgb(255, 248, 220)
+    console.log(computedStyle.border); // 1px solid rgb(0, 0, 0)
+
+    // 상속 스타일
+    console.log(computedStyle.color); // rgb(255, 0, 0)
+
+    // 기본 스타일
+    console.log(computedStyle.display); // block
+
+  </script>
+</body>
+</html>
+```
 ## 10. DOM표준
+HTML과 DOM 표준은 W3C(월드와이드웹컨소시엄, World Wide Web Consortium)과 WHATWG(웹하이퍼텍스트애플리케이션기술 워킹 그룹, Web Hypertext Application Technology Working Group) 두 단체가 나름대로 협력하면서 공통된 표준을 만들어 왔다.
+
+그런데 약 1년 전부터 두 단체가 서로 다른 결과물을 내놓기 시작했다. 별개의 HTML과 DOM 표준을 만드는 것은 이롭지 않으므로 2018년 4월부터 구글, 애플, 마이크로소프트, 모질라, 네 주류 브라우저 벤더사가 주도하는 WHATWG이 단일 표준을 내놓기로 두 단체가 합의했다.(각주 https://www.zdnet.co.kr/view/?no=20190531184644)
+
+DOM은 현재 아래와 같이 4개의 레벨(버전)이 있다.
+
+레벨 | 표준문서 URL
+:---:|:---:
+DOM Level 1 | https://www.w3.org/TR/REC-DOM-Level-1
+DOM Level 2 | https://www.w3.org/TR/DOM-Level-2-Core
+DOM Level 3 | https://www.w3.org/TR/DOM-Level-3-Core
+DOM Level 4 | https://dom.spec.whatwg.org
