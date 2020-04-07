@@ -201,9 +201,188 @@ window 객체와 Document, HTMLElement 타입의 DOM 노드 객체는 이벤트�
 </body>
 </html>
 ```
-### 3.3. addEventListener 메소드 방식
+### 3.3. addEventListener 메서드 방식
+DOM level 2에서 도입된 EventTarget.prototype.addEventListener 메소드를 사용하여 이벤트를 등록할 수 있다.
 
+addEventListener 메서드의 첫번째 매개변수에 이벤트 종류를 나타내는 문자열인 이벤트타입을 전달한다. 이때 이벤트 핸들러 프로퍼티 방식과는 달리 on 접두사를 붙이지 않는다. 두번째 매개변수에는 이벤트 핸들러를 전달한다. 마지막 매개변수에는 이벤트를 캐치할 이벤트 전파단계(캡쳐링 버블링)를 지정한다. 생략하거나 false를 지정하면 버블링 단계에서 이벤트를 캐치하고 true를 지정하면 캡쳐링 단계에서 이벤트를 캐치한다.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button>Click Me</button>
+  <script>
+    const $button = document.querySelector('button');
+
+    $button.addEventListener('click', function() {
+      console.log('button clicked');
+    });
+  </script>
+</body>
+</html>
+```
+만약 동일한 요소에서 발생한 동일한 이벤트에 대해서 이벤트핸들러 프로퍼티 방식과 addEventListener 메서드 방식 모두를 사용하여 이벤트 핸들러를 등록하면 어떤식으로 작동할지 예상해 보자.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button>Click Me</button>
+  <script>
+    const $button = document.querySelector('button');
+
+    $button.onclick = function() {
+      console.log('[이벤트 핸들러 프로퍼티 방식]');
+    }
+
+    $button.addEventListener('click', function() {
+      console.log('[addEventListener 메소드 방식]');
+    });
+  </script>
+</body>
+</html>
+```
+addEventListener 방식은 이벤트 핸들러 프로퍼티에 바인딩된 이벤트 핸들러에 아무런 영향을 주지 않는다. 따라서 버튼요소에 클릭 이벤트가 발생하면 2개의 이벤트 핸들러 모두가 호출된다.
+
+동일한 요소에서 발생한 동일한 이벤트에 대해 이벤트 핸들러 프로퍼티 방식은 하나이상의 이벤트 핸들러를 바인딩할 수 없지만 addEventListener 메서드는 하나 이상의 이벤트 핸들러를 등록시킬 수 있다. 이때 이벤트 핸들러는 등록된 순서대로 호출 된다.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button>Click Me</button>
+  <script>
+    const $button = document.querySelector('button');
+
+    $button.addEventListener('click', function() {
+      console.log('[1]');
+    });
+
+    $button.addEventListener('click', function() {
+      console.log('[2]');
+    });
+  </script>
+</body>
+</html>
+```
+단, addEventListener를 통해 참조가 동일한 이벤트 핸들러를 중복 등록하게 되면 하나의 이벤트 핸들러만 등록되게 된다.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <button>Click me!</button>
+  <script>
+    const $button = document.querySelector('button');
+
+    const handleClick = () => console.log('button click');
+
+    // 참조가 동일한 이벤트 핸들러를 중복 등록하면 하나의 핸들러만 등록된다.
+    $button.addEventListener('click', handleClick);
+    $button.addEventListener('click', handleClick);
+  </script>
+</body>
+</html>
+```
 ## 4. 이벤트 핸들러 제거
+addEventListener 메서드로 등록한 이벤트 핸들러를 제거하려면 EventTarget.prototype.removeEventListener 메서드를 사용한다.
+removeEventListener 메서드에 전달할 수 있는 인수는 addEventListener 메서드와 동일하다. 단 addEventListener 메서드에 전달한 인수와 removeEventListener 메서드에 전달한 인수가 일치하지 않으면 이벤트 핸들러는 제거되지 않는다.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button>Click Me</button>
+  <script>
+    const $button = document.querySelector('button');
+
+    const clickFunc = () => console.log('button clicked');
+
+    /** 3번째 인수가 생략되어있지만 생략했을 시 false값을
+     *  기본값으로 가지고 있다.
+     */
+    $button.addEventListener('click', clickFunc); 
+
+    /** EventListener를 등록할때 false값을 3번째 인자로 false를
+     *  입력 받았기 때문에 3번째 인수로 true 값을 줄 시엔
+     *  인수가 일치하지 않는것으로 평가되어 EventListener가
+     *  삭제되지 않는다. 
+    */
+    $button.removeEventListener('click', clickFunc, true); // 삭제 실패
+
+    $button.removeEventListener('click', clickFunc); // 삭제 성공
+  </script>
+</body>
+</html>
+```
+removeEventListener 메소드에 전달한 제거 대상 이벤트 핸들러는 addEventListener 메소드에 전달한 등록 이벤트 핸들러는 동일한 참조를 갖는 함수이어야 한다. 따라서 아래와 같이 무명 함수를 이벤트 핸들러로 등록한 경우, 제거할 수 없다. 이벤트 핸들러를 제거하려면 이벤트 핸들러의 참조를 변수나 자료 구조에 저장하고 있어야 한다.
+```
+// 이벤트 핸들러 등록
+// 이벤트 핸들러를 참조할 수 없으므로 제거할 수 없다
+$button.addEventListener('click', () => console.log('button click'));
+```
+단, 이벤트 핸들러 내부에서 removeEventListener 메소드를 호출하여 자신을 제거하는 방법은 가능하다. 이때 이벤트 핸들러는 단 한번 호출된다.
+```
+// 기명 함수를 이벤트 리스너로 등록
+$button.addEventListener('click', function foo() {
+  console.log('button click');
+  /** 이벤트 핸들러가 호출되면 작업을 수행 후 
+   *  이벤트 핸들러를 제거한다.
+   *  따라서 이벤트 핸들러는 단 한번만 호출된다.
+   */
+  $button.removeEventListener('click', foo);
+});
+```
+기명함수를 이벤트 핸들러로 등록할 수 없다면 호출된 함수, 즉 함수자신을 가리키는 arguments.callee를 사용할 수도 있다.
+```
+$button.addEventListener('click', function () {
+  console.log('button click');
+  // arguments.callee는 호출된 함수, 즉 함수 자신을 가리킨다.
+  $button.removeEventListener('click', arguments.callee);
+});
+```
+arguments.callee는 코드최적화를 방해하므로 strict 모드에서 사용이 금지된다. 따라서 가급적 이벤트 핸들러의 참조를 변수나 자료구조에 저장하여 제거하는 편이 좋다.
+
+이벤트 프로퍼티방식으로 등록한 이벤트 핸들러는 removeEventListener 메서드로 제거할 수 없다. 이벤트 핸들러를 제거하려면 이벤트 핸들러 프로퍼티에 null을 할당한다.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button>Click Me</button>
+  <script>
+    const $button = document.querySelector('button');
+
+    const clickFunc = () => console.log('button clicked');
+
+    // 이벤트 핸들러 프로퍼티 방식으로 핸들러 등록
+    $button.onclick = clickFunc;
+
+    // 이벤트 핸들러 프로퍼티방식으로 등록된 핸들러 삭제
+    $button.onclick = null;
+  </script>
+</body>
+</html>
+```
 ## 5. 이벤트 객체
 ### 5.1. 이벤트 객체의 상속 구조
 ### 5.2. 이벤트 객체의 공통 프로퍼티
