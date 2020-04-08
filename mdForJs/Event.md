@@ -385,9 +385,172 @@ arguments.callee는 코드최적화를 방해하므로 strict 모드에서 사�
 ```
 ## 5. 이벤트 객체
 ### 5.1. 이벤트 객체의 상속 구조
+
 ### 5.2. 이벤트 객체의 공통 프로퍼티
+Event 인터페이스, 즉 Event.prototype에 정의되어 있는 이벤트 관련 프로퍼티는 UIEvent, CustomEvent, MouseEvent 등 모든 파생 이벤트 객체에 상속된다. 즉, Event 인터페이스의 모든 이벤트 객체의 공통 프로퍼티를 파생 이벤트 객체에 상속한다. 이벤트 객체의 공통 프로퍼티는 아래와 같다.
+
+프로퍼티 | 설명 | 타입
+:---:|:---:|:---:|
+type | 이벤트 타입 | 문자열
+target | 이벤트를 발생시킨 DOM요소 | DOM요소 노드
+currentTarget | 이벤트 핸들러가 바인딩된 DOM요소 노드 | DOM요소 노드
+eventPhase | 이벤트 전파단계를 나타낸다.<br> 0: 이벤트 없음 1: 캡처링 단계 2: 타깃단계 3: 버블링 단계 | 숫자
+bubbles | 이벤트를 버블링으로 전파하는지 여부를 나타낸다.<br> 아래 이벤트는 bubbles: false로 버블링 하지 않는다.<br> - 포커스 이벤트 focus / blur<br> - 리소스 이벤트 load / unload / abort / error<br> - 마우스 이벤트 mouseenter / mouseleave | 불리언
+cancelable | preventDefault 메서드를 호출하여 이벤트를 취소하였는지 여부를 나타낸다. | 불리언
+isTrusted | 사용자의 행위에 의해 발생한 이벤트 인지 여부를 나타낸다.<br> * 자바스크립트 코드를 통해 인위적으로 발생시킨 이벤트. 예를 들어 click 메서드 또는 dispatchEvent 메서드를 통해 발생시킨 이벤트인 경우, isTrusted는 false이다. | 불리언
+timeStamp | 이벤트가 발생한 시각(1970/01/01/00:00:00부터 경과한 밀리초)	 | 숫자
+
+예를 들어 체크박스 요소의 체크상태가 변경되면 현재 체크상태가 출력되도록 출력해 보자
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <input type="checkbox">
+  <em class="message">off</em>
+  <script>
+    const $checkBox = document.querySelector('input[type=checkbox]');
+    const $message = document.querySelector('.message');
+
+    $checkBox.onchange = function(e) {
+      console.log(e); // Event { ... }
+      
+      /** 이벤트 객체 e의 프로토타입은
+       *  Event.prototype 이다.
+       */
+      console.log(Object.getPrototypeOf(e));
+
+
+      console.log(e.type); // change
+      console.log(e.target); // <input type="checkbox">
+      console.log(e.currentTarget); // <input type="checkbox">
+      console.log(e.cancelable); // false
+      console.log(e.isTrusted); // true
+      console.log(e.eventPhase); // 2
+      $message.textContent = e.target.checked ? 'on' : 'off';
+    };
+  </script>
+</body>
+</html>
+```
+사용자 입력에 의해 체크박스 요소의 체크상태가 변경되면 checked 프로퍼티의 값이 변경되고 change 이벤트가 발생한다. 이때 Event 타입의 이벤트 객체가 생성된다.(위 코드에서 e라는 식별자) 이벤트 객체의 target프로퍼티는 이벤트를 발생시킨 객체를 가리킨다.(e.target) 따라서 target 프로퍼티가 가리키는 객체는 change 이벤트를 발생시킨 DOM 요소이고 이객체의 checked 프로퍼티는 현재의 체크상태를 나타낸다.
+
+이벤트 객체의 currentTarget 프로퍼티는 이벤트 핸들러가 바인딩된 DOM 요소를 가리킨다. 위 예제의 경우, 이벤트를 발생시킨 DOM 요소와 이벤트 핸들러가 바인딩된 DOM 요소는 모두 $checkBox이다. 따라서 이벤트 객체의 target 프로퍼티와 currentTarget 프로퍼티는 동일한 DOM 노드 요소를 가리킨다.
+
+이처럼 일반적으로 이벤트 객체의 Target프로퍼티와 currentTarget 프로퍼티는 동일한 DOM 요소를 가리키지만 이벤트 위임에서는 이벤트 객체의 target 프로퍼티와 currnetTarget 프로퍼티는 다른 요소를 가리킬 수 있다는점을 유의하도록 하자.
 ### 5.3. 마우스 정보 취득
+click, dbclick, mousedown, mouseup, mousemove, mousenter, mouseleave 이벤트가 발생하면 생성되는 MouseEvent 타입의 이벤트 객체는 아래와 같은 고유의 프로퍼티를 갖는다.
+
+- 마우스 포인터의 좌표 정보를 나타내는 프로퍼티: screenX/screenY, clientX/clientY, pageX/pageY, offsetX/offsetY
+- 버튼 정보를 나타내는 프로퍼티: altKey, ctrlKey, shiftKey, button
+
+예를 들어, DOM 요소를 드래그하여 이동시키는 예제를 만들어 보도록하자. 드래그는 마우스 버튼을 누른상태에서 마우스를 이동하는 것으로 시작하고 마우스 버튼을 떼면 종료한다. 따라서 드래그는 mousedown 이벤트가 발생한 상태에서 mousemove 이벤트가 발생한 시점에서 시작하고 mouseup 이벤트가 발생한 시점에 종료한다.
+
+드래그가 시작되면 드래그 시작시점, 즉 mousedown 이벤트가 발생했을 때의 마우스 포인터 좌표와 드래그를 하고있는 시점, 즉 mouse 이벤트가 발생할 때마다의 마우스 포인터 좌표를 비교하여 드래그 대상의 이동거리를 계산한다.
+
+그리고 종료시점은 mouseup 이벤트 발생시점으로 하고 이때 드래그 대상요소를 이동시키는 이벤트 핸들러를 제거하여 이동을 멈춘다.
+
+마우스 포인터 좌표는 MouseEvent 타입의 이벤트 객체에서 제공한다. mousedown, mouseup, mousemove 이벤트가 발생하면 생성되는 MouseEvent 타입의 이벤트 객체는 마우스 포인터의 좌표정보를 나타내는 screenX/screenY, clientX/clinetY, pageX/pageY, offsetX/offsetY 프로퍼티를 제공한다. 이 프로퍼티 중에서 clientX/clientY는 뷰포트 (Viewport), 즉 웹페이지의 가시영역을 기준으로 마우스 포인터 좌표를 나타낸다.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .box {
+      width: 100px;
+      height: 100px;
+      background-color: #fff700;
+      border: 5px solid orange;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box"></div>
+  <script>
+    const $box = document.querySelector('.box');
+
+    const initialMousePos = { x: 0, y: 0 }; // 멈췄을때 상자 좌표나타내주기.
+
+    const offset = { x: 0, y: 0 }; // 드래그 이벤트가 일어나는 중에 마우스 좌표
+
+    // 드래그이벤트 = mousedown + mousemove 조합
+    // 드래그 이벤트 종료 = mouseup
+    // 이동거리 계산(offset) = (mousemove + mousedown)'s offset - mousedownEvent's initial(시작 position)
+    // 이동거리를 계산할 초기 시작점(initialMousePos) = clientX/clientY - offset.x/offset.y
+
+    /** 
+     * 구현해야할 목록.
+     * 
+     * 드래그 이벤트 : MouseEvent의 clientX/clientY 속성을 통해 마우스이벤트 발생했을시 좌표값을 구하고 
+     *                transform 속성의 translate3d() 함수를 통해 박스를 이동시키는 
+     *                eventListener를 구현해서 등록
+     * 
+     * 드래그 이벤트 종료(mouseupEvent) : 드래그 이벤트때 발생하는 EventListener 제거
+     */
+
+     function getStartPos(e) {
+      initialMousePos.x = e.clientX - offset.x;
+      initialMousePos.y = e.clientY - offset.y;
+
+      document.addEventListener('mousemove', moveBox);
+     }
+
+     function moveBox(e) {
+      offset.x = e.clientX - initialMousePos.x;
+      offset.y = e.clientY - initialMousePos.y;
+
+      $box.style.transform = `translate3d(${offset.x}px, ${offset.y}px, 0)`;
+     }
+     
+     $box.addEventListener('mousedown', getStartPos);
+
+     document.addEventListener('mouseup', () => {
+       document.removeEventListener('mousemove', moveBox);
+     });
+  </script>
+</body>
+</html>
+```
 ### 5.4. 키보드 정보 취득
+keydown, keyup, keypress 이벤트가 발생하면 생성되는 KeyBoardEvnet 타입의 이벤트 객체는 artKey, ctrlKey, shiftKey, metaKey, key, keyCode와 같은 고유 프로퍼티를 갖는다.
+
+예를 들어, input요소의 입력필드에 엔터 키가 입력되면 현재까지 입력필드에 입력된 값을 출력하는 예제를 만들어 보도록하자.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <input type="text">
+  <script>
+    $input = document.querySelector('input[type=text]');
+
+    $input.addEventListener('keypress', (e) => {
+      if(e.keyCode !== 13) return;
+      
+      const $em = document.createElement('em');
+      const textNode = document.createTextNode(`${e.target.value}`);
+      $em.appendChild(textNode);
+      $em.style.display = 'block';
+      document.body.appendChild($em);
+
+      $input.value = '';
+    });
+  </script>
+</body>
+</html>
+```
 ## 6. 이벤트 전파
 ## 7. 이벤트 위임
 ## 8. 기본동작의 변경

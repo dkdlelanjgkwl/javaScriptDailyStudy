@@ -541,7 +541,7 @@ console.log($listItem); // "javaScript"
 $li.textContent = "HTML5";
 console.log($li); // <li>HTML5</li>
 ```
-단, textContent 프로퍼티에 문자열을 할당하면 요소 노드의 textContent 프로퍼티에 문자열을 할당하면 요소 노드의 모든 자식 노드가 제거되고 할당한 문자열이 텍스트로 추가되므로 주의가 필요하다.
+단, textContent 프로퍼티에 문자열을 할당하면 요소 노드의 모든 자식 노드가 제거되고 할당한 문자열이 텍스트로 추가되므로 주의가 필요하다.
 
 **2. 요소노드를 DOM에 추가**
 ```
