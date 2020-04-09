@@ -552,7 +552,322 @@ keydown, keyup, keypress 이벤트가 발생하면 생성되는 KeyBoardEvnet �
 </html>
 ```
 ## 6. 이벤트 전파
+
+DOM 트리상에 존재하는 DOM요소 노드에서 발생하는 이벤트는 DOM트리를 통해 전파된다. 이를 이벤트 전파(event propagatino)이라고 한다. 예를 들어, 아래 예제를 살펴보자.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <ul id="fruits">
+    <li id="apple">Apple</li>
+    <li id="banana">Banana</li>
+    <li id="orange">Orange</li>
+  </ul>
+</body>
+</html>
+```
+
+ul의 두번째 자식요소인 li 요소를 클릭할시에 클릭이벤트가 발생한다고 가정해보자. 이때 생성된 이벤트 객체는 이벤트를 발생시킨 DOM요소인 이벤트 타깃(event target)을 중심으로 DOM트리를 통해 전파된다. 이벤트 전파는 이벤트 객체가 전파되는 방향에 따라 3단계로 구분할 수 있다.
+
+- 캡처링 단계(capturing phase): 이벤트가 상위 요소에서 하위 요소 방향으로 전파
+- 타깃 단계(target phase): 이벤트가 이벤트 타깃에 도달
+- 버블링 단계(bubbling phase): 이벤트가 하위요소에서 상위 요소 방향으로 전파
+
+이처럼 DOM트리를 통해 전파되는 이벤트는 이벤트를 발생시킨 이벤트 타깃은 물론 상위 DOM 요소에서도 캐치할 수 있다. 예를 들어, 위 예제의 ul 요소에 이벤트 핸들러를 바인딩하면 자신이 발생시킨 이벤트 뿐만 아니라 하위요소에서 발생한 이벤트까지 캐치할 수 있다. 하위 요소에서 발생한 이벤트는 버블링 되기 때문이다.
+
+이벤트 핸들러는 기본적으로 타깃단계와 버블링 단계의 이벤트를 캐치한다.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <ul id="fruits">
+    <li id="apple">Apple</li>
+    <li id="banana">Banana</li>
+    <li id="orange">Orange</li>
+  </ul>
+  <script>
+    const $fruits = document.querySelector('#fruits');
+    /** 
+     * #fruits 요소에 바인딩된 이벤트 핸들러는 버블링 단계의
+     * 이벤트를 캐치한다.
+     * 따라서 이벤트 핸들러는 $fruits 요소와 $fruits 하위 요소에서
+     * 발생하여 버블링되는 이벤트를 모두 캐치할 수 있다.
+     * 
+    */
+    $fruits.onclick = e => {
+      // 버블링 단계와 target 단계두가지만 캐치하기때문에 eventPhase값은 2또는 3의 값이 나온다.
+      console.log(`이벤트 단계: ${e.eventPhase}`);
+      console.log(`이벤트 타깃: ${e.target.nodeName}#${e.target.id}`);
+    };
+  </script>
+</body>
+</html>
+```
+이벤트 핸들러 어트리뷰트/프로퍼티 방식으로 등록한 이벤트 핸들러는 타깃단계와 버블링 단계의 이벤트만 캐치할 수 있다. 하지만 addEventListener 방식으로 등록한 이벤트 핸들러는 버블링 또는 캡처링 단계의 이벤트를 선별적으로 캐치할 수 있다. 캡처링 단계의 이벤트를 캐치하려면 addEvetnListener 메서드의 3번째 인수로 true를 전달해야한다. 3번째 인수를 생략하거나 false를 전달하면 타깃단계와 버블링 단계의 이벤트만을 캐치할 수 있다.
+
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <ul id="fruits">
+    <li id="apple">Apple</li>
+    <li id="banana">Banana</li>
+    <li id="orange">Orange</li>
+  </ul>
+  <script>
+    const $fruits = document.querySelector('#fruits');
+    
+    $fruits.addEventListener('click', e => {
+      /**
+       * li의 첫번째요소인 #apple을 클릭했을시에 log.
+       * apple (6) [li#apple, ul#fruits, body, html, document, Window] 3
+       * 
+       * ul 요소인 #fruits를 클릭했을시에 log.
+       * 이벤트 단계: fruits (5) [ul#fruits, body, html, document, Window] 2
+       * 
+       * addEventListener 메서드를 사용할때 3번째 인자값을 주지않거나 false
+       * 를 주었을시에 target 단계 이벤트와 bubbling단계 이벤트 캐치를 할 수 있다.
+      */
+      console.log(`이벤트 단계: ${e.target.id}`, e.composedPath(), e.eventPhase);
+    });
+  </script>
+</body>
+</html>
+```
+버블링 단계 또는 캡쳐링 단계의 모든 이벤트는 이벤트 패스(이벤트가 통과하는 DOM트리상의 경로)에 위치한 모든 DOM 요소에서 캐치할 수 있다. 참고로 이벤트 패스는 Evnet.prototype.composedPath 메서드로 확인할 수 있다.
+
+아래 예제는 캡쳐링 단계의 이벤트와 버블링 단계의 이벤트를 캐치하는 이벤트 핸들러가 혼용되는 경우이다.
+
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <p>버블링과 캡쳐링 이벤트<button>버튼</button></p>
+  <script>
+    const $p = document.querySelector('p');
+    const $btn = document.querySelector('button');
+
+    // 버블링 단계만 캐치
+    document.body.addEventListener('click', () => console.log('handler for body'));
+    $btn.addEventListener('click', () => console.log('handler for button'));
+
+    // 캡쳐링 단계만 캐치
+    $p.addEventListener('click', () => console.log('handler for paragraph'), true);
+  </script>
+</body>
+</html>
+```
+위 예제의 경우 body, button 요소는 버블링 단계의 이벤트만을 캐치하고 p요소는 캡쳐링 단계의 이벤트만을 캐치한다.
+
+**이벤트가 실행될때 이벤트를 찾는 과정은 캡쳐링 -> 타겟 -> 버블링 순으로 검색을 한다.** 만약 button요소에서 클릭이벤트로 핸들러가 호출되게 된다면 p요소에 캡쳐링을 캐치하는 이벤트 핸들러가 등록되어 있으므로 이벤트 검색순서에서 캡처링이 먼저 실행되기 때문에 p요소의 이벤트 핸들러가 먼저 호출되고(캡쳐링 단계) 그다음에 button 요소의 이벤트핸들러가 호출되고(타깃단계) 그다음 버블링단계 이벤트로 document body에 등록했던 이벤트 핸들러(bubbling 단계)가 호출되게된다.
+
+따라서 button을 클릭했을시에 log는 아래와 같다
+```
+Handler for paragraph.
+Handler for button.
+Handler for body.
+```
+만약 p 요소에서 클릭이벤트가 발생하면 캡처링 단계를 캐치하는 p요소의 이벤트 핸들러가 호출되고 버블링 단계를 캐치하는 body 요소의 이벤트핸들러가 실행되어 아래와 같은 log가 찍히게 된다.
+```
+Handler for paragraph.
+Handler for body.
+```
 ## 7. 이벤트 위임
+사용자가 네비게이션 아이템(li 요소)을 클릭하여 선택하면 현재 선택된 네비게이션 아이템을 구별하기 위해 클래스를 추가하는 아래 예제를 살펴보도록하자.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    #fruits {
+      display: flex;
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #fruits li {
+      width: 100px;
+      cursor: pointer;
+    }
+
+    #fruits .active {
+      color: red;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul id="fruits">
+      <li id="apple" class="active">Apple</li>
+      <li id="banana">Banana</li>
+      <li id="orange">Orange</li>
+    </ul>
+  </nav>
+  <div>선택된 네비게이션 아이템: <em class="msg">apple</em></div>
+  <script>
+    /**
+     * 사용자 클릭에 의해 선택된 네비게이션 아이템(li 요소)에 active 클래스를 추가하고
+     * 그외의 모든 네비게이션 아이템의 active클래스를 제거한다.
+     * 그리고 선택된 아이템을 em 요소의 자식요소로 추가한다.
+    */
+    const $ul = document.querySelector('#fruits');
+    const $msg = document.querySelector('.msg');
+
+    /**
+     * Evnet 인터페이스의 프로퍼티를
+     * 디스트럭쳐링 할당을 통해 인자로 받아준다.
+    */
+    function activate({ target }) {
+      // console.log(Object.getOwnPropertyNames(Event.prototype));
+
+      [...$ul.children].forEach(fruit => {
+        fruit.classList.toggle('active', target === fruit);
+
+        /**
+         * target.firstChild는 노드객체로 반환.
+         * textNode의 text를 알기위해선 charactorData로 부터
+         * 상속받은 프로퍼티인 wholeText를 이용하여 DOMString
+         * (문자열)을 얻어낸다.
+        */
+        $msg.textContent = target.firstChild.wholeText;
+      });
+    }
+
+    document.getElementById('apple').onclick = activate;
+    document.getElementById('banana').onclick = activate;
+    document.getElementById('orange').onclick = activate;
+  </script>
+</body>
+</html>
+```
+위 예제를 살펴보면 모든 네비게이션 아이템(li 요소)이 클릭이벤트에 반응하도록 모든 네비게이션 아이템에 이벤트핸들러 activate를 등록하였다. 만일 네비게이션 아이템이 100개라면 100개의 이벤트 핸들러를 등록해야한다. 이는 많은 DOM요소에 이벤트핸들러를 등록하므로 성능저하의 원인이 될뿐만 아니라 유지보수에도 부적합한 코드를 생산하게 된다.
+
+이벤트 위임(Event delegation)은 다수의 하위 요소에 이벤트 핸들러를 등록하는 대신 하나의 상위요소에 이벤트 핸들러를 등록하는 방식을 말한다. 하위 요소에서 발생한 이벤트는 버블링단계(bubbling phase)에서 부모요소 방향으로 전파된다. 따라서 상위 요소는 하위 요소에서 발생한 이벤트를 캐치할 수 있다. 이벤트 위임을 통해 상위 DOM요소에 이벤트 핸들러를 등록하면 여러 개의 하위요소에 이벤트 핸들러를 등록할 필요가 없다. 또한 동적으로 하위 요소를 추가하더라도 일일이 추가된 요소에 이벤트 핸들러를 등록할 필요가 없다.
+
+이벤트 위임을 통해 위 예제를 수정해 보자
+
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    #fruits {
+      display: flex;
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #fruits li {
+      width: 100px;
+      cursor: pointer;
+    }
+
+    #fruits .active {
+      color: red;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul id="fruits">
+      <li id="apple" class="active">Apple</li>
+      <li id="banana">Banana</li>
+      <li id="orange">Orange</li>
+    </ul>
+  </nav>
+  <div>선택된 네비게이션 아이템: <em class="msg">apple</em></div>
+  <script>
+    /**
+     * 사용자 클릭에 의해 선택된 네비게이션 아이템(li 요소)에 active 클래스를 추가하고
+     * 그외의 모든 네비게이션 아이템의 active클래스를 제거한다.
+     * 그리고 선택된 아이템을 em 요소의 자식요소로 추가한다.
+    */
+    const $ul = document.querySelector('#fruits');
+    const $msg = document.querySelector('.msg');
+
+    function activate({ target }) {
+      
+      if (!target.matches('#fruits > li')) return;
+
+      [...$ul.children].forEach(fruit => {
+        fruit.classList.toggle('active', target === fruit);
+
+        $msg.textContent = target.firstChild.wholeText;
+      });
+    }
+    // 이벤트 위임: 상위 요소(ul#fruits)는 하위 요소의 이벤트를 캐치할 수 있다.
+    $ul.onclick = activate;
+  </script>
+</body>
+</html>
+```
+이벤트 위임을 통해 하위 요소에서 발생한 이벤트를 처리할 때 주의할 것은 상위 요소에 이벤트 핸들러를 등록하기 때문에 이벤트 타깃, 즉 이벤트를 실제로 발생시킨 DOM 요소가 개발자가 기대한 DOM요소가 아닐 수도 있다는 것이다. 위 예제의 경우, ul#fruits 요소에 바인딩된 이벤트 핸들러는 자기 자신은 물론  ul#fruits 요소의 하위 요소 중에서 클릭이벤트를 발생시킨 모든 요소에 반응한다. 따라서 이벤트에 반응이 필요한 요소(위 예제의 경우 #fruits > li 선택자에 의해서 선택되는 요소)에 한정하여 이벤트 핸들러가 실행되도록 이벤트 타깃을 검사할 필요가 있다.
+```
+function activate({ target }) {
+  // 이벤트를 발생시킨 요소(target)이 ul#fruits의 자식 요소가 아니라면 무시한다.
+  if (!target.matches('#fruits > li')) return;
+  ...
+```
+element.prototype.matches 메서드는 인수로 전달된 선택자에 의해 특정 노드를 탐색가능한지 확인한다.
+
+일반적으로 이벤트 객체의 target 프로퍼티와 currentTarget 프로퍼티는 동일한 DOM 요소를 가리키지만 이벤트 위임을 통해 상위 요소에 이벤트를 바인딩한 경우, 이벤트 객체의 target 프로퍼티와 currentTarget 프로퍼티가 다른 DOM 요소를 가리킬 수 있다. 위 예제에서는 아래와 같이 $ul 요소에 이벤트를 바인딩하였다.
+```
+$ul.onclick = activate;
+```
+이때 이벤트 객체의 currentTarget 프로퍼티는 언제나 변함없이 $ul 요소를 가리키지만 이벤트 객체의 target 프로퍼티는 실제로 이벤트를 발생시킨 요소를 가리킨다. $ul 요소도 클릭 이벤트를 발생시킬 수 있으므로 이 경우 이벤트 객체의 currentTarget 프로퍼티와 target 프로퍼티는 동일한 $ul 요소를 가리키지만 $ul 요소의 하위 요소에서 클릭 이벤트가 발생한 경우 이벤트 객체의 currentTarget 프로퍼티와 target 프로퍼티는 다른 요소를 가리킨다.
+
+포커스 이벤트 focus, blur는 이벤트가 버블링되지 않는다. 따라서 하위요소에서 focus, blur이벤트를 발생시키는 경우, 이벤트 위임을 사용할 수 없다.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <div class="container">
+    <input type="text">
+  </div>
+<script>
+  const $container = document.querySelector('.container');
+
+  // input 이벤트는 버블링되므로 상위 요소에 이벤트 위임을 할 수 있다.
+  $container.addEventListener('input', e => {
+    console.log(e); // InputEvent {...}
+  });
+
+  // focus 이벤트는 버블링되지 않으므로 상위 요소에 이벤트 위임을 할 수 없다.
+  $container.addEventListener('focus', e => {
+    console.log(e); // 절대로 이벤트가 발생하지 않는다.
+  });
+
+  // blur 이벤트는 버블링되지 않으므로 상위 요소에 이벤트 위임을 할 수 없다.
+  $container.addEventListener('blur', e => {
+    console.log(e); // 절대로 이벤트가 발생하지 않는다.
+  });
+</script>
+</body>
+</html>
+```
 ## 8. 기본동작의 변경
 ### 8.1. 기본 동작 중단
 ### 8.2. 이벤트 전파 방지
