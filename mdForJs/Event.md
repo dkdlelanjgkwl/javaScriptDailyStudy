@@ -553,7 +553,7 @@ keydown, keyup, keypress 이벤트가 발생하면 생성되는 KeyBoardEvnet �
 ```
 ## 6. 이벤트 전파
 
-DOM 트리상에 존재하는 DOM요소 노드에서 발생하는 이벤트는 DOM트리를 통해 전파된다. 이를 이벤트 전파(event propagatino)이라고 한다. 예를 들어, 아래 예제를 살펴보자.
+DOM 트리상에 존재하는 DOM요소 노드에서 발생하는 이벤트는 DOM트리를 통해 전파된다. 이를 이벤트 전파(event propagation)이라고 한다. 예를 들어, 아래 예제를 살펴보자.
 ```
 <!DOCTYPE html>
 <html>
@@ -870,7 +870,56 @@ $ul.onclick = activate;
 ```
 ## 8. 기본동작의 변경
 ### 8.1. 기본 동작 중단
+DOM 요소의 저마다의 기본동작이있다. 예를 들어, a 요소를 클릭하면 href 어트리뷰트에 지정된 링크로 이동하고, checkbox 또는 radio 요소를 클릭하면 체크또는 해제된다.
+
+이벤트 객체의 preventDefault 메서드는 이러한 DOM 요소의 기본동작을 중단시킨다.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <a href="https://www.google.com">go</a>
+  <input type="checkbox">
+  <script>
+  document.querySelector('a').onclick = e => {
+    // a 요소의 기본 동작을 중단한다.
+    e.preventDefault();
+  };
+
+  document.querySelector('input[type=checkbox]').onclick = e => {
+    // checkbox 요소의 기본 동작을 중단한다.
+    e.preventDefault();
+  };
+  </script>
+</body>
+</html>
+```
 ### 8.2. 이벤트 전파 방지
+이벤트 객체의 stopProgation 메서드는 이벤트 전파를 중지시킨다.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <div class="container">
+    <button class="btn1">Button 1</button>
+    <button class="btn2">Button 2</button>
+    <button class="btn3">Button 3</button>
+  </div>
+  <script>
+    document.querySelector('.container').onclick = ({ target }) => {
+      if (!target.matches('.container > button')) return;
+      target.style.color = 'red';
+    };
+
+    // btn2 요소는 이벤트를 전파하지 않으므로 상위 요소에서 이벤트를 캐치할 수 없다.
+    document.querySelector('.btn2').onclick = e => {
+      // 이벤트 전파 중단
+      e.stopPropagation();
+      e.target.style.color = 'blue';
+    };
+  </script>
+</body>
+</html>
+```
 ## 9. 이벤트 핸들러 내부의 this
 ### 9.1. 이벤트 핸들러 어트리뷰트 방식
 ### 9.2. 이벤트 핸들러 프로퍼티 방식 && addEventListener 메서드 방식
