@@ -920,9 +920,185 @@ DOM 요소의 저마다의 기본동작이있다. 예를 들어, a 요소를 클
 </body>
 </html>
 ```
+위 예제를 살펴보면 상위 요소인 container 요소에 이벤트를 위임하였다. 따라서 하위 요소에서 발생한 클릭 이벤트를 상위 요소인 container 요소가 캐치하여 이벤트를 처리한다. 하지만 하위 요소 중에서 btn2 요소는 자체적으로 이벤트를 처리한다. 이때 btn2 요소는 자신이 발생시킨 이벤트가 전파되는 것을 중단하여 자신에게 바인딩된 이벤트 핸들러만 실행되도록 한다.
+
+이처럼 상위 요소와 하위 요소의 이벤트를 각각 별도로 처리하기 위해 이벤트의 전파를 중단시키기 위해서 stopPropagation 메소드를 사용한다.
 ## 9. 이벤트 핸들러 내부의 this
 ### 9.1. 이벤트 핸들러 어트리뷰트 방식
+이벤트 핸들러 어트리뷰트 방식의 경우, 이벤트 핸들러 내부의 this는 전역객체 window를 가리킨다.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <button onclick="handleClick()">Click me</button>
+  <script>
+    function handleClick () {
+      console.log(this); // window
+    }
+  </script>
+</body>
+</html>
+```
 ### 9.2. 이벤트 핸들러 프로퍼티 방식 && addEventListener 메서드 방식
+이벤트 핸들러 프로퍼티 방식과 addEventListener 메서드 방식 모두 이벤트 핸들러 내부의 this는 이벤트를 바인인딩한 DOM 요소를 가리킨다. 즉, 이벤트 객체의 currentTarget 프로퍼티와 같다.
+```
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button class="btn1">0</button>
+  <button class="btn2">0</button>
+  <script>
+    const $btn1 = document.querySelector('.btn1');
+    const $btn2 = document.querySelector('.btn2');
+
+    $btn1.addEventListener('click', function(e) {
+      // this는 이벤트를 바인딩한 DOM 요소를 가리킨다.
+      console.log(this); // <button id="btn">Click me</button>
+      console.log(e.currentTarget); // <button id="btn">Click me</button>
+      console.log(this === e.currentTarget); // true
+
+      ++this.textContent;
+    });
+
+    $btn2.onclick = function(e) {
+      // this는 이벤트를 바인딩한 DOM 요소를 가리킨다.
+      console.log(this); // <button id="btn">Click me</button>
+      console.log(e.currentTarget); // <button id="btn">Click me</button>
+      console.log(this === e.currentTarget); // true
+
+      ++this.textContent;
+    }
+  </script>
+</body>
+</html>
+```
+화살표 함수로 정의한 이벤트 핸들러의 경우, 이벤트 핸들러 내부의 this는 상위 컨텍스트의 this를 가리킨다. 화살표 함수는 함수자체의 this 바인딩을 갖지않는다.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <button class="btn1">0</button>
+  <button class="btn2">0</button>
+  <script>
+    const $button1 = document.querySelector('.btn1');
+    const $button2 = document.querySelector('.btn2');
+
+    // 이벤트 핸들러 프로퍼티 방식
+    $button1.onclick = e => {
+      // 화살표 함수는 this를 갖지 않는다. 따라서 this는 상위 컨텍스트의 this, window를 가리킨다.
+      console.log(this); // window
+      console.log(e.currentTarget); // <button id="btn">Click me</button>
+      console.log(this === e.currentTarget); // false
+
+      // $button의 textContent를 1 증가시킨다.
+      // this는 window를 가리키므로 window.textContent에 NaN을 할당한다.
+      ++this.textContent;
+    };
+
+    // addEventListener 메소드 방식
+    $button2.addEventListener('click', e => {
+      // 화살표 함수는 this를 갖지 않는다. 따라서 this는 상위 컨텍스트의 this, window를 가리킨다.
+      console.log(this); // window
+      console.log(e.currentTarget); // <button id="btn">Click me</button>
+      console.log(this === e.currentTarget); // false
+
+      // $button의 textContent를 1 증가시킨다.
+      // this는 window를 가리키므로 window.textContent에 NaN을 할당한다.
+      ++this.textContent;
+    });
+  </script>
+</body>
+</html>
+```
+클래스에서 이벤트 핸들러를 바인딩하는 경우, this에 주의해야 한다. 아래 예제를 살펴보자. 아래 예제는 이벤트 핸들러 프로퍼티 방식을 사용하고 있으나 addEventListener 메서드 방식을 사용하는 경우와 동일 하다.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <button class="btn">0</button>
+  <script>
+    class App {
+      constructor() {
+        this.$button = document.querySelector('.btn');
+        this.count = 0;
+
+        // increase 메소드를 이벤트 핸들러로 등록
+        // 이벤트 핸들러 increase 내부의 this는 DOM 요소(this.$button)를 가리킨다.
+        this.$button.onclick = this.increase;
+        // -> TypeError: Cannot set property 'textContent' of undefined
+      }
+
+      increase() {
+        this.$button.textContent = ++this.count;
+      }
+    }
+
+    new App();
+  </script>
+</body>
+</html>
+```
+위 예제의 increase 메서드 내부의 this는 클래스가 생성할 인스턴스를 가리키지 않고 $button을 가리키기 때문에 에러가 발생한다. 따라서 increase 메서드를 이벤트 바인딩할 때, bind 메서드를 사용해 this를 전달하여 increase 메서드 내부의 this가 클래스가 생성할 인스턴스를 가리키도록 해야 한다.
+
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <button class="btn">0</button>
+  <script>
+    class App {
+      constructor() {
+        this.$button = document.querySelector('.btn');
+        this.count = 0;
+
+        // increase 메소드를 이벤트 핸들러로 등록
+        // 이벤트 핸들러 increase 내부의 this는 DOM 요소(this.$button)를 가리킨다.
+        // this.$button.onclick = this.increase;
+        // -> TypeError: Cannot set property 'textContent' of undefined
+
+        // increase 메소드 내부의 this가 인스턴스를 가리키도록 한다.
+        this.$button.onclick = this.increase.bind(this);
+      }
+
+      increase() {
+        this.$button.textContent = ++this.count;
+      }
+    }
+
+    new App();
+  </script>
+</body>
+</html>
+```
+또는 클래스 필드에 할당한 화살표 함수를 이벤트 핸들러로 등록하여 이벤트 핸들러 내부의 this가 인스턴스를 가리키도록 할 수도 있다. 다만 이때 이벤트 핸들러 increase는 프로토타입 메소드가 아닌 인스턴스 메소드가 된다.
+```
+<!DOCTYPE html>
+<html>
+<body>
+  <button class="btn">0</button>
+  <script>
+    class App {
+      constructor() {
+        this.$button = document.querySelector('.btn');
+        this.count = 0;
+
+        // 화살표 함수인 increase를 이벤트 핸들러로 등록
+        this.$button.onclick = this.increase;
+      }
+
+      // increase는 인스턴스 메소드이며 내부의 this는 인스턴스를 가리킨다.
+      increase = () => this.$button.textContent = ++this.count;
+    }
+    new App();
+  </script>
+</body>
+</html>
+```
 ## 10. 이벤트 핸들러에 인수 전달
 ## 11. 커스텀 이벤트
 ### 11.1. 커스텀 이벤트 생성
