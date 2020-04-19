@@ -408,3 +408,79 @@ xhr.setRequestHeader('accept', 'application/json');
 알아둬야 할 MIME-type종류: <https://developer.mozilla.org/ko/docs/Web/HTTP/Basics_of_HTTP/MIME_types>
 
 ### 3.3. HTTP 응답 처리
+
+서버가 전송한 응답을 처리하려면 XMLHttpRequest 객체가 발생시키는 이벤트를 캐치해야 한다. XMLHttpRequest 객체의 이벤트 핸들러 프로퍼티인 readyState 프로퍼티 값이 변경된 경우, 발생하는 readystatechange 이벤트를 캐치하여 아래와 같이 HTTP 응답을 처리할 수 있다.
+
+```html
+<!DOCTYPE html>
+<html lang="ko-kr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const xhr = new XMLHttpRequest();
+
+      xhr.open('GET', 'https://jsonplaceholder.typicode.com/todos/1');
+
+      xhr.send();
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== XMLHttpRequest.DONE) return;
+        if (xhr.status === 200) {
+          console.log(JSON.parse(xhr.response));
+        } else {
+          console.error('Error', xhr.status, xhr.statusText);
+        }
+      };
+      console.log(xhr);
+    </script>
+  </body>
+</html>
+```
+
+send 메서드를 통해 서버에 HTTP 요청을 전송하면 서버는 응답을 반환한다. 하지만 언제 응답이 클라이언트에 도달할 지는 알 수 없다. 따라서 readystatechange 이벤트를 통해 HTTP 현재 요청상태를 확인 해야한다. readystatechange 이벤트는 요청의 현재 상태를 나타내는 readyState 프로퍼티가 변경될때 마다 발생한다.
+
+onreadystatechange 이벤트 핸들러 프로퍼티에 할당한 이벤트 핸들러는 xhr.readyState가 XMLHttpRequest.DONE인지 확인하여 서버의 응답이 완료되었는지 확인한다.
+
+서버의 응답이 완료되었다면 요청에 대한 응답상태(HTTP 상태 코드)를 나타내는 xhr.status가 200인지 확인하여 정상처리와 예외 처리를 구분한다. 정상적으로 응답에 요청이 도착하였다면 요청에대한 응답 몸체(response body)를 나타내는 xhr.response에서 서버가 전송한 데이터를 취득한다.
+
+readystatechange 이벤트 대신 load 이벤트를 캐치해도 좋다. load 이벤트는 요청이 성공적으로 완료된 경우 발생한다. 따라서 load 이벤트를 캐치하는 경우, xhr.readyState가 XMLHttpRequest.DONE인지 확인할 필요가 없다.
+
+```html
+<!DOCTYPE html>
+<html lang="ko-kr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      // XMLHttpRequest 객체 생성
+      const xhr = new XMLHttpRequest();
+
+      // HTTP 요청 초기화
+      xhr.open('GET', 'https://jsonplaceholder.typicode.com/todos/1');
+
+      // HTTP 요청 전송
+      xhr.send();
+
+      // load 이벤트는 요청이 성공적으로 완료된 경우 발생한다.
+      xhr.onload = () => {
+        // status는 response 상태 코드를 반환 : 200 => 정상 응답
+        if (xhr.status === 200) {
+          console.log(JSON.parse(xhr.response));
+          console.log('1');
+          // {userId: 1, id: 1, title: "delectus aut autem", completed: false}
+        } else {
+          console.error('Error', xhr.status, xhr.statusText);
+        }
+      };
+      console.log(xhr);
+    </script>
+  </body>
+</html>
+```
